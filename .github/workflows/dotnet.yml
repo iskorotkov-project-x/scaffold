@@ -10,6 +10,10 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        configuration: [debug, release]
 
     steps:
     - uses: actions/checkout@v2
@@ -20,7 +24,7 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
-      run: dotnet build --no-restore
+      run: dotnet build --no-restore -c ${{ matrix.configuration }}
     - name: Test
       run: dotnet test --no-build --verbosity normal
 
@@ -31,6 +35,11 @@ jobs:
     needs: [build]
 
     steps:
+    - uses: actions/checkout@v2
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 5.0.x
     - name: Publish
       run: dotnet publish -c release
     - name: Upload a Build Artifact
@@ -50,6 +59,11 @@ jobs:
         runtime: [win-x64, win-x86, win-arm, win-arm64, linux-x64, linux-arm, linux-arm64, osx-x64]
 
     steps:
+    - uses: actions/checkout@v2
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 5.0.x
     - name: Publish
       run: dotnet publish -c release -r ${{ matrix.runtime }} --self-contained
     - name: Upload a Build Artifact
