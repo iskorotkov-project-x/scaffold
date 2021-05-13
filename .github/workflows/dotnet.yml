@@ -46,7 +46,7 @@ jobs:
       with:
         dotnet-version: 5.0.x
     - name: Publish
-      run: dotnet publish -c release -r ${{ matrix.runtime }} --self-contained ${{ matrix.type == 'standalone' }} -p:PublishTrimmed=${{ matrix.type == 'standalone' }} -p:PublishSingleFile=true -p:UseAppHost=true -p:PublishReadyToRun=true
+      run: dotnet publish -c release -r ${{ matrix.runtime }} --self-contained ${{ matrix.type == 'standalone' }} -p:PublishSingleFile=true -p:UseAppHost=true
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v2.2.3
       with:
