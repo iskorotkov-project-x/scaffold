@@ -57,6 +57,15 @@ jobs:
     strategy:
       matrix:
         runtime: [win-x64, win-x86, win-arm, win-arm64, linux-x64, linux-arm, linux-arm64, osx-x64]
+        include:
+        - runtime: win-x64
+          extension: .exe
+        - runtime: win-x86
+          extension: .exe
+        - runtime: win-arm
+          extension: .exe
+        - runtime: win-arm64
+          extension: .exe
 
     steps:
     - uses: actions/checkout@v2
@@ -69,5 +78,5 @@ jobs:
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v2.2.3
       with:
-        name: scaffold-${{ matrix.runtime }}
-        path: src/Scaffold/bin/Release/net5.0/${{ matrix.runtime }}/publish/Scaffold
+        name: scaffold-${{ matrix.runtime }}${{ matrix.extension }}
+        path: src/Scaffold/bin/Release/net5.0/${{ matrix.runtime }}/publish/Scaffold${{ matrix.extension }}
