@@ -1,5 +1,8 @@
 # Scaffold
 
+[![.NET](https://github.com/iskorotkov-project-x/scaffold/actions/workflows/dotnet.yml/badge.svg)](https://github.com/iskorotkov-project-x/scaffold/actions/workflows/dotnet.yml)
+[![CodeQL](https://github.com/iskorotkov-project-x/scaffold/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/iskorotkov-project-x/scaffold/actions/workflows/codeql-analysis.yml)
+
 - [Scaffold](#scaffold)
   - [Структура проекта](#структура-проекта)
   - [Технологии](#технологии)
