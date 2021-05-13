@@ -24,9 +24,9 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
-      run: dotnet build --no-restore -c ${{ matrix.configuration }}
+      run: dotnet build -c ${{ matrix.configuration }} --no-restore
     - name: Test
-      run: dotnet test --no-build --verbosity normal
+      run: dotnet test -c ${{ matrix.configuration }} --no-build --verbosity normal
 
   publish-self-contained:
 
