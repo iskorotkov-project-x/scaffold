@@ -23,3 +23,37 @@ jobs:
       run: dotnet build --no-restore
     - name: Test
       run: dotnet test --no-build --verbosity normal
+
+  publish-self-contained:
+
+    runs-on: ubuntu-latest
+
+    needs: [build]
+
+    steps:
+    - name: Publish
+      run: dotnet publish -c release
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@v2.2.3
+      with:
+        name: scaffold
+        path: src/Scaffold/bin/Release/net5.0/publish/Scaffold
+
+  publish-dependant:
+
+    runs-on: ubuntu-latest
+
+    needs: [build]
+
+    strategy:
+      matrix:
+        runtime: [win-x64, win-x86, win-arm, win-arm64, linux-x64, linux-arm, linux-arm64, osx-x64]
+
+    steps:
+    - name: Publish
+      run: dotnet publish -c release -r ${{ matrix.runtime }} --self-contained
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@v2.2.3
+      with:
+        name: scaffold-${{ matrix.runtime }}
+        path: src/Scaffold/bin/Release/net5.0/${{ matrix.runtime }}/publish/Scaffold
