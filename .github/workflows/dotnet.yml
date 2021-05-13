@@ -51,4 +51,6 @@ jobs:
       uses: actions/upload-artifact@v2.2.3
       with:
         name: scaffold-${{ matrix.runtime }}-${{ matrix.type }}
-        path: src/Scaffold/bin/Release/net5.0/${{ matrix.runtime }}/publish/Scaffold[.exe]
+        path: |
+          src/Scaffold/bin/Release/net5.0/${{ matrix.runtime }}/publish/Scaffold
+          src/Scaffold/bin/Release/net5.0/${{ matrix.runtime }}/publish/Scaffold.exe
