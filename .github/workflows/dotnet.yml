@@ -28,27 +28,7 @@ jobs:
     - name: Test
       run: dotnet test -c ${{ matrix.configuration }} --no-build --verbosity normal
 
-  publish-self-contained:
-
-    runs-on: ubuntu-latest
-
-    needs: [build]
-
-    steps:
-    - uses: actions/checkout@v2
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 5.0.x
-    - name: Publish
-      run: dotnet publish -c release
-    - name: Upload a Build Artifact
-      uses: actions/upload-artifact@v2.2.3
-      with:
-        name: scaffold
-        path: src/Scaffold/bin/Release/net5.0/publish/Scaffold
-
-  publish-dependant:
+  publish:
 
     runs-on: ubuntu-latest
 
@@ -57,15 +37,7 @@ jobs:
     strategy:
       matrix:
         runtime: [win-x64, win-x86, win-arm, win-arm64, linux-x64, linux-arm, linux-arm64, osx-x64]
-        include:
-        - runtime: win-x64
-          extension: .exe
-        - runtime: win-x86
-          extension: .exe
-        - runtime: win-arm
-          extension: .exe
-        - runtime: win-arm64
-          extension: .exe
+        type: [standalone, minimal]
 
     steps:
     - uses: actions/checkout@v2
@@ -74,9 +46,9 @@ jobs:
       with:
         dotnet-version: 5.0.x
     - name: Publish
-      run: dotnet publish -c release -r ${{ matrix.runtime }} --self-contained
+      run: dotnet publish -c release -r ${{ matrix.runtime }} --self-contained ${{ matrix.type == 'standalone' }} -p:PublishTrimmed=${{ matrix.type == 'standalone' }} -p:PublishSingleFile=true -p:UseAppHost=true -p:PublishReadyToRun=true
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v2.2.3
       with:
-        name: scaffold-${{ matrix.runtime }}${{ matrix.extension }}
-        path: src/Scaffold/bin/Release/net5.0/${{ matrix.runtime }}/publish/Scaffold${{ matrix.extension }}
+        name: scaffold-${{ matrix.runtime }}-${{ matrix.type }}
+        path: src/Scaffold/bin/Release/net5.0/${{ matrix.runtime }}/publish/Scaffold[.exe]
