@@ -37,7 +37,6 @@ jobs:
     strategy:
       matrix:
         runtime: [win-x64, win-x86, win-arm, win-arm64, linux-x64, linux-arm, linux-arm64, osx-x64]
-        type: [standalone, minimal]
 
     steps:
     - uses: actions/checkout@v2
@@ -46,11 +45,11 @@ jobs:
       with:
         dotnet-version: 5.0.x
     - name: Publish
-      run: dotnet publish -c release -r ${{ matrix.runtime }} --self-contained ${{ matrix.type == 'standalone' }} -p:PublishSingleFile=true -p:UseAppHost=true
+      run: dotnet publish -c release -r ${{ matrix.runtime }} --self-contained false -p:PublishSingleFile=true -p:UseAppHost=true
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v2.2.3
       with:
-        name: scaffold-${{ matrix.runtime }}-${{ matrix.type }}
+        name: scaffold-${{ matrix.runtime }}
         path: |
           src/Scaffold/bin/Release/net5.0/${{ matrix.runtime }}/publish/Scaffold
           src/Scaffold/bin/Release/net5.0/${{ matrix.runtime }}/publish/Scaffold.exe
