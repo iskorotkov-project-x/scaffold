@@ -53,3 +53,13 @@ jobs:
         path: |
           src/Scaffold/bin/Release/net5.0/${{ matrix.runtime }}/publish/Scaffold
           src/Scaffold/bin/Release/net5.0/${{ matrix.runtime }}/publish/Scaffold.exe
+    - name: Create release
+      uses: softprops/action-gh-release@v1
+      # Create release only for tags pushed to master branch
+      if: startsWith(github.ref, 'refs/tags/') && github.event_name == 'push'
+      with:
+        files: |
+          src/Scaffold/bin/Release/net5.0/${{ matrix.runtime }}/publish/Scaffold
+          src/Scaffold/bin/Release/net5.0/${{ matrix.runtime }}/publish/Scaffold.exe
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
