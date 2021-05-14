@@ -3,6 +3,7 @@ name: .NET
 on:
   push:
     branches: [ master ]
+    tags: [ 'v*.*.*' ]
   pull_request:
     branches: [ master ]
 
@@ -53,3 +54,12 @@ jobs:
         path: |
           src/Scaffold/bin/Release/net5.0/${{ matrix.runtime }}/publish/Scaffold
           src/Scaffold/bin/Release/net5.0/${{ matrix.runtime }}/publish/Scaffold.exe
+    - name: Create a release
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: |
+          src/Scaffold/bin/Release/net5.0/${{ matrix.runtime }}/publish/Scaffold
+          src/Scaffold/bin/Release/net5.0/${{ matrix.runtime }}/publish/Scaffold.exe
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
