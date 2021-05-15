@@ -4,6 +4,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "files", "files", "{357B2FDE
 ProjectSection(SolutionItems) = preProject
 	README.md = README.md
 	.gitignore = .gitignore
+	LICENSE = LICENSE
+	CONTRIBUTING.md = CONTRIBUTING.md
+	CODE_OF_CONDUCT.md = CODE_OF_CONDUCT.md
 EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{8CCB995A-2F68-47DF-8C6E-CE9DCB10803A}"
@@ -29,6 +32,12 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Templater.Regex", "src\Templater.Regex\Templater.Regex.csproj", "{466E8CC8-BC85-4610-A3C5-67BDED4882DA}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Logic", "src\Logic\Logic.csproj", "{049ECB94-279B-4B4F-BD36-1941BD995342}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{0832002A-0042-45F1-BC3A-2D93D714DC0D}"
+ProjectSection(SolutionItems) = preProject
+	.github\workflows\codeql-analysis.yml = .github\workflows\codeql-analysis.yml
+	.github\workflows\dotnet.yml = .github\workflows\dotnet.yml
+EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

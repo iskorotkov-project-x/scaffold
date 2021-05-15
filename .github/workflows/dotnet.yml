@@ -46,7 +46,7 @@ jobs:
       with:
         dotnet-version: 5.0.x
     - name: Publish
-      run: dotnet publish -c release -r ${{ matrix.runtime }} --self-contained false -p:PublishSingleFile=true -p:UseAppHost=true
+      run: dotnet publish -c release -r ${{ matrix.runtime }} --self-contained false -p:PublishSingleFile=true -p:UseAppHost=true src/Scaffold/Scaffold.csproj
     - name: Move Windows artifact
       if: startsWith(matrix.runtime, 'win')
       run: mv src/Scaffold/bin/Release/net5.0/${{ matrix.runtime }}/publish/Scaffold.exe scaffold-${{ matrix.runtime }}.exe
