@@ -38,6 +38,7 @@ jobs:
     strategy:
       matrix:
         runtime: [win-x64, win-x86, win-arm, win-arm64, linux-x64, linux-arm, linux-arm64, osx-x64]
+        selfContained: [true, false]
 
     steps:
     - uses: actions/checkout@v2
@@ -46,13 +47,14 @@ jobs:
       with:
         dotnet-version: 5.0.x
     - name: Publish
-      run: dotnet publish -c Release -r ${{ matrix.runtime }} --self-contained false -p:PublishSingleFile=true -p:UseAppHost=true src/Scaffold/Scaffold.csproj
+      run: dotnet publish -c Release -r ${{ matrix.runtime }} -o publish --self-contained {{ matrix.selfContained }} \
+           -p:PublishSingleFile=true -p:UseAppHost=true src/Scaffold/Scaffold.csproj
     - name: Move Windows artifact
       if: startsWith(matrix.runtime, 'win')
-      run: mv src/Scaffold/bin/Release/net5.0/${{ matrix.runtime }}/publish/Scaffold.exe scaffold-${{ matrix.runtime }}.exe
+      run: mv publish/Scaffold.exe scaffold-${{ matrix.runtime }}.exe
     - name: Move non-Windows artifact
       if: ${{ !startsWith(matrix.runtime, 'win') }}
-      run: mv src/Scaffold/bin/Release/net5.0/${{ matrix.runtime }}/publish/Scaffold scaffold-${{ matrix.runtime }}
+      run: publish/Scaffold scaffold-${{ matrix.runtime }}
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v2.2.3
       with:
