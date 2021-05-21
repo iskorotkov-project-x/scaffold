@@ -53,7 +53,7 @@ jobs:
       run: mv publish/Scaffold.exe scaffold-${{ matrix.runtime }}.exe
     - name: Move non-Windows artifact
       if: ${{ !startsWith(matrix.runtime, 'win') }}
-      run: publish/Scaffold scaffold-${{ matrix.runtime }}
+      run: mv publish/Scaffold scaffold-${{ matrix.runtime }}
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v2.2.3
       with:
