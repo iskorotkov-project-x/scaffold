@@ -47,7 +47,7 @@ jobs:
       with:
         dotnet-version: 5.0.x
     - name: Publish
-      run: dotnet publish -c Release -r ${{ matrix.runtime }} -o publish --self-contained ${{ matrix.type == 'standalone' }} -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true -p:PublishTrimmed=true -p:UseAppHost=true src/Scaffold/Scaffold.csproj
+      run: dotnet publish -c Release -r ${{ matrix.runtime }} -o publish --self-contained ${{ matrix.type == 'standalone' }} -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true -p:PublishTrimmed=${{ matrix.type == 'standalone' }} -p:UseAppHost=true src/Scaffold/Scaffold.csproj
 
       # Move artifacts.
     - name: Move Windows artifact
