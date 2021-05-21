@@ -48,25 +48,37 @@ jobs:
         dotnet-version: 5.0.x
     - name: Publish
       run: dotnet publish -c Release -r ${{ matrix.runtime }} -o publish --self-contained ${{ matrix.type == 'standalone' }} -p:PublishSingleFile=true -p:UseAppHost=true src/Scaffold/Scaffold.csproj
+
+      # Move artifacts.
     - name: Move Windows artifact
       if: startsWith(matrix.runtime, 'win')
       run: mv publish/Scaffold.exe scaffold-${{ matrix.runtime }}-${{ matrix.type }}.exe
     - name: Move non-Windows artifact
       if: ${{ !startsWith(matrix.runtime, 'win') }}
       run: mv publish/Scaffold scaffold-${{ matrix.runtime }}-${{ matrix.type }}
-    - name: Upload a Build Artifact
+      
+      # Upload artifacts to workflow results.
+    - name: Upload a Windows build artifact
+      if: startsWith(matrix.runtime, 'win')
       uses: actions/upload-artifact@v2.2.3
       with:
-        name: scaffold-${{ matrix.runtime }}
+        name: scaffold-${{ matrix.runtime }}-${{ matrix.type }}.exe
         path: |
-          scaffold-${{ matrix.runtime }}
-          scaffold-${{ matrix.runtime }}.exe
-    - name: Create a release
+          scaffold-${{ matrix.runtime }}-${{ matrix.type }}.exe
+    - name: Upload a non-Windows build artifact
+      if: ${{ !startsWith(matrix.runtime, 'win') }}
+      uses: actions/upload-artifact@v2.2.3
+      with:
+        name: scaffold-${{ matrix.runtime }}-${{ matrix.type }}
+        path: |
+          scaffold-${{ matrix.runtime }}-${{ matrix.type }}
+
+    - name: Upload an artifact for release
       uses: softprops/action-gh-release@v1
       if: startsWith(github.ref, 'refs/tags/')
       with:
         files: |
-          scaffold-${{ matrix.runtime }}
-          scaffold-${{ matrix.runtime }}.exe
+          scaffold-${{ matrix.runtime }}-${{ matrix.type }}
+          scaffold-${{ matrix.runtime }}-${{ matrix.type }}.exe
       env:
         GITHUB_TOKEN: ${{ github.token }}
