@@ -63,15 +63,13 @@ jobs:
       uses: actions/upload-artifact@v2.2.3
       with:
         name: scaffold-${{ matrix.runtime }}-${{ matrix.type }}.exe
-        path: |
-          scaffold-${{ matrix.runtime }}-${{ matrix.type }}.exe
+        path: scaffold-${{ matrix.runtime }}-${{ matrix.type }}.exe
     - name: Upload a non-Windows build artifact
       if: ${{ !startsWith(matrix.runtime, 'win') }}
       uses: actions/upload-artifact@v2.2.3
       with:
         name: scaffold-${{ matrix.runtime }}-${{ matrix.type }}
-        path: |
-          scaffold-${{ matrix.runtime }}-${{ matrix.type }}
+        path: scaffold-${{ matrix.runtime }}-${{ matrix.type }}
 
     - name: Upload an artifact for release
       uses: softprops/action-gh-release@v1
