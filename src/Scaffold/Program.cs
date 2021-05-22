@@ -12,12 +12,12 @@ namespace Scaffold
     {
         private static async Task<int> Main(string[] args)
         {
-            var services = new ServiceCollection();
+            // var services = new ServiceCollection();
 
             // Add services.
             // services.AddScoped<InterfaceType, RealType>();
 
-            await using var serviceProvider = services.BuildServiceProvider();
+            // await using var serviceProvider = services.BuildServiceProvider();
 
             // Get required services.
             // var v = serviceProvider.GetRequiredService<InterfaceType>();
@@ -27,36 +27,43 @@ namespace Scaffold
                 new Option<bool>(new[] {"-l", "--list"}, "Displays the entire list of templates"),
             };
 
+            var languageOption = new Option<string>(new[] { "-lang", "--language" }, "The language of the template to create. Depends on the template") { IsRequired = true };
+            languageOption.FromAmong("c#", "C#", "csharp", "go", "GO");
+
+            var outputOption = new Option<DirectoryInfo>(new[] { "-o", "--output" }, "Sets the location where the template will be created");
+            outputOption.ExistingOnly();
+
             var createCommand = new Command("create", "Create a project using the specified template")
             {
-                new Option<bool>(new[] {"-?", "-h", "--help"}, "Show help and usage information"),
-                new Option<string>(new[] {"-n", "--name"}, "Sets the name of the output data"),
-                new Option<DirectoryInfo>(new[] {"-o", "--output"},
-                                          "Sets the location where the template will be created"),
-                // TODO: Надо посмотреть как сделать Required Option
-                new Option<string>(new[] {"-lang", "--language"},
-                                   "The language of the template to create. Depends on the template"),
-                new Option<string>(new[] {"-v", "--version"}, "Sets the SDK version"),
-                new Option<bool>(new[] {"--git"}, "Adds Git support"),
-                new Option<bool>(new[] {"--docker"}, "Adds Dockerfile support"),
-                new Option<bool>(new[] {"-kn", "--kubernetes"}, "Adds Kubernetes support"),
-                new Option<bool>(new[] {"-gi", "--gitignore"}, "Adds a file .gitignore"),
-                new Option<bool>(new[] {"-di", "--dockerignore"}, "Adds a file .dockerignore"),
-                new Option<bool>(new[] {"-rm", "--readme"}, "Adds a file README.md"),
-                new Option<bool>(new[] {"-con", "--contributing"}, "Adds a file CONTRIBUTING.md"),
-                new Option<bool>(new[] {"-li", "--license"}, "Adds a file LICENSE"),
-                new Option<bool>(new[] {"-cop", "--codeofproduct"}, "Adds a file CODE_OF_PRODUCT.md"),
-                new Option<bool>(new[] {"-ghw", "--githubworkflows"}, "Adds files for GitHub Workflows"),
-                new Option<bool>(new[] {"-glci", "--gitlabci"}, "Adds files for GitLab CI"),
+                new Option<string>(new[] {"-n", "--name"},              "Sets the name of the output data"),
+                outputOption,
+                languageOption,
+                new Option<string>(new[] {"-v", "--version"},           "Sets the SDK version"),
+                new Option<bool>(new[] {"--git"},                       "Adds Git support"),
+                new Option<bool>(new[] {"--docker"},                    "Adds Dockerfile support"),
+                new Option<bool>(new[] {"-kn", "--kubernetes"},         "Adds Kubernetes support"),
+                new Option<bool>(new[] {"-gi", "--gitignore"},          "Adds a file .gitignore"),
+                new Option<bool>(new[] {"-di", "--dockerignore"},       "Adds a file .dockerignore"),
+                new Option<bool>(new[] {"-rm", "--readme"},             "Adds a file README.md"),
+                new Option<bool>(new[] {"-con", "--contributing"},      "Adds a file CONTRIBUTING.md"),
+                new Option<bool>(new[] {"-li", "--license"},            "Adds a file LICENSE"),
+                new Option<bool>(new[] {"-cop", "--codeofproduct"},     "Adds a file CODE_OF_PRODUCT.md"),
+                new Option<bool>(new[] {"-ghw", "--githubworkflows"},   "Adds files for GitHub Workflows"),
+                new Option<bool>(new[] {"-glci", "--gitlabci"},         "Adds files for GitLab CI"),
             };
 
             createCommand.Handler =
                 CommandHandler
-                    .Create<bool, string, DirectoryInfo, string, string, bool, bool, bool, bool, bool, bool, bool, bool,
+                    .Create<string, DirectoryInfo, string, string, bool, bool, bool, bool, bool, bool, bool, bool,
                         bool, bool, bool>(CreateCall);
             rootCommand.AddCommand(createCommand);
 
             rootCommand.Handler = CommandHandler.Create<bool>(EmptyCall);
+
+            if (args.Length == 0)
+            {
+                return await rootCommand.InvokeAsync(new[] { "-h" });
+            }
 
             return await rootCommand.InvokeAsync(args);
         }
@@ -105,44 +112,23 @@ namespace Scaffold
         /// <param name="githubworkflows"   >Adds files for GitHub Workflows.</param>
         /// <param name="gitlabci"          >Adds files for GitLab CI.</param>
         /// </summary>
-        private static void CreateCall(bool help, string name, DirectoryInfo output, string language, string version,
+        private static void CreateCall(string name, DirectoryInfo output, string language, string version,
                                        bool git, bool docker, bool kubernetes, bool gitignore, bool dockerignore,
                                        bool readme, bool contributing, bool license, bool codeofproduct,
                                        bool githubworkflows, bool gitlabci)
         {
-            if (help)
-            {
-                ShowHelpCreate();
-                return;
-            }
+            Console.WriteLine($"Creating project from {language} template.");
 
             if (output != null)
             {
-                if (!output.Exists)
-                {
-                    Console.WriteLine($"OUTPUT_DIRECTORY \"{output}\" does not exist. Please set correct folder.");
-                    return;
-                }
-
-                Console.WriteLine($"OUTPUT_DIRECTORY set to \"{output}\".");
+                Console.WriteLine($"Output directory set to \"{output}\".");
             }
 
             if (!string.IsNullOrEmpty(name))
             {
                 Console.WriteLine($"The name of the output data set to {name}.");
             }
-
-            if (string.IsNullOrEmpty(language) || !new[] { "C#", "csharp", "go" }.Contains(language))
-            {
-                Console.WriteLine($"Please enter correct language:");
-                foreach (var lng in new[] { "C#", "csharp", "go" })
-                {
-                    Console.WriteLine(lng);
-                }
-                return;
-            }
-
-            Console.WriteLine($"Creating project from {language} template.");
+            
 
             if (!string.IsNullOrEmpty(version))
             {
@@ -202,42 +188,6 @@ namespace Scaffold
             {
                 Console.WriteLine($"Added files for GitLab CI.");
             }
-        }
-
-        /// <summary>
-        /// Show help of command "create"
-        /// </summary>
-        private static void ShowHelpCreate()
-        {
-            Console.WriteLine(
-                @"
-Create a project using the specified template
-usage: scaffold create <TEMPLATE> [<options>]
-
-Arguments:
-     TEMPLATE	                The template used to create the project when executing the command
-Options:	
-     -n | --name <OUTPUT_NAME>
-                                Sets the name of the output data
-     -o | --output <OUTPUT_DIRECTORY>
-                                Sets the location where the template will be created
-     -lang | --language {[""C#"" | csharp] | go}
-                                The language of the template to create.Depends on the template
-     - v | --version < VERSION_NUMBER >
-                                Sets the SDK version
-     --git                      Adds Git support
-     --docker                   Adds Dockerfile support
-     - kn | --kubernetes        Adds Kubernetes support
-     - gi | --gitignore         Adds a file.gitignore
-     - di | --dockerignore      Adds a file.dockerignore
-     - rm | --readme            Adds a file README.md
-     - con | --contributing     Adds a file CONTRIBUTING.md
-     - li | --license           Adds a file LICENSE
-     - cop | --codeofproduct    Adds a file CODE_OF_PRODUCT.md
-     - ghw | --githubworkflows  Adds files for GitHub Workflows
-     - glci | --gitlabci        Adds files for GitLab CI
-
-");
         }
     }
 }
