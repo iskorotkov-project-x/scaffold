@@ -2,6 +2,9 @@ using System.Collections.Generic;
 
 namespace Model
 {
+    /// <summary>
+    /// Information about created project
+    /// </summary>
     public class Project
     {
         public IEnumerable<File> CreatedFiles { get; init; }

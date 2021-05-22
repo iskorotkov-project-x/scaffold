@@ -5,28 +5,35 @@ using System.CommandLine.Invocation;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Business;
+using Generator.Local;
+using Loader.FileSystem;
+using Microsoft.Extensions.DependencyInjection;
 using Model;
+using Templater.Regex;
 
 namespace Scaffold
 {
     static class Program
     {
-        static List<Template> templates = new List<Template>() 
-        { 
+        static List<Template> templates = new List<Template>()
+        {
             new Template() { TemplateName = "tl1", Language="c#" },
             new Template() { TemplateName = "tl2", Language="go" },
             new Template() { TemplateName = "tl3", Language="go" },
             new Template() { TemplateName = "tl4", Language="c#" },
         };
+        private static readonly ServiceCollection _services = new ServiceCollection();
+        private static ServiceProvider _serviceProvider;
 
         private static async Task<int> Main(string[] args)
         {
-            // var services = new ServiceCollection();
-
             // Add services.
-            // services.AddScoped<InterfaceType, RealType>();
+            _services.AddSingleton<ILoader, FileSystemLoader>(x => new FileSystemLoader("C:\\templates"));
+            _services.AddSingleton<IGenerator, LocalGenerator>();
+            _services.AddSingleton<ITemplater, RegexTemplater>();
 
-            // await using var serviceProvider = services.BuildServiceProvider();
+            _serviceProvider = _services.BuildServiceProvider();
 
             // Get required services.
             // var v = serviceProvider.GetRequiredService<InterfaceType>();
@@ -35,15 +42,6 @@ namespace Scaffold
             {
                 new Option<bool>(new[] {"-l", "--list"}, "Displays the entire list of templates"),
             };
-
-            //var languageOption = new Option<string>(new[] { "-lang", "--language" }, "The language of the template to create. Depends on the template") { IsRequired = true };
-            //languageOption.FromAmong("c#", "C#", "csharp", "go", "GO");
-
-            //var outputOption = new Option<DirectoryInfo>(new[] { "-o", "--output" }, "Sets the location where the template will be created");
-            //outputOption.ExistingOnly();
-
-            //var templateArgument = new Argument<string>("template", "The template used to create the project when executing the command");
-            //templateArgument.FromAmong(templates.Select(x => x.Name).ToArray());
 
             var createCommand = new Command("create", "Create a project using the specified template")
             {
@@ -99,10 +97,12 @@ namespace Scaffold
         /// </summary>
         private static void ShowListTemplates()
         {
+            var loader = _serviceProvider.GetRequiredService<ILoader>();
+            var templateInfos = loader.GetAllLanguagesAndTemplateNames().ToList();
             Console.WriteLine("n    Name   Languages");
-            for (int i = 0; i < templates.Count(); i++)
+            for (int i = 0; i < templateInfos.Count(); i++)
             {
-                Console.WriteLine($"{i+1}    {templates[i].TemplateName}    {templates[i].Language}");
+                Console.WriteLine($"{i + 1}    {templateInfos[i].TemplateName}    {templateInfos[i].Language}");
             }
         }
 
@@ -136,74 +136,85 @@ namespace Scaffold
 
             if (output != null)
             {
-                Console.WriteLine($"Output directory set to \"{output}\".");
+                Console.WriteLine($"TODO Output directory set to \"{output}\".");
             }
 
             if (!string.IsNullOrEmpty(name))
             {
-                Console.WriteLine($"The name of the output data set to {name}.");
+                Console.WriteLine($"TODO The name of the output data set to {name}.");
             }
 
             if (!string.IsNullOrEmpty(version))
             {
-                Console.WriteLine($"The SDK version set to {version}.");
+                Console.WriteLine($"TODO The SDK version set to {version}.");
             }
 
             if (git)
             {
-                Console.WriteLine($"Added git support.");
+                Console.WriteLine($"TODO Added git support.");
             }
 
             if (docker)
             {
-                Console.WriteLine($"Added Dockerfile support.");
+                Console.WriteLine($"TODO Added Dockerfile support.");
             }
 
             if (kubernetes)
             {
-                Console.WriteLine($"Added Kubernetes support.");
+                Console.WriteLine($"TODO Added Kubernetes support.");
             }
 
             if (gitignore)
             {
-                Console.WriteLine($"Added .gitignore file.");
+                Console.WriteLine($"TODO Added .gitignore file.");
             }
 
             if (dockerignore)
             {
-                Console.WriteLine($"Added .dockerignore file.");
+                Console.WriteLine($"TODO Added .dockerignore file.");
             }
 
             if (readme)
             {
-                Console.WriteLine($"Added README.md file.");
+                Console.WriteLine($"TODO Added README.md file.");
             }
 
             if (contributing)
             {
-                Console.WriteLine($"Added CONTRIBUTING.md file.");
+                Console.WriteLine($"TODO Added CONTRIBUTING.md file.");
             }
 
             if (license)
             {
-                Console.WriteLine($"Added LICENSE file.");
+                Console.WriteLine($"TODO Added LICENSE file.");
             }
 
             if (codeofproduct)
             {
-                Console.WriteLine($"Added CODE_OF_PRODUCT.md file.");
+                Console.WriteLine($"TODO Added CODE_OF_PRODUCT.md file.");
             }
 
             if (githubworkflows)
             {
-                Console.WriteLine($"Added files for GitHub Workflows.");
+                Console.WriteLine($"TODO Added files for GitHub Workflows.");
             }
 
             if (gitlabci)
             {
-                Console.WriteLine($"Added files for GitLab CI.");
+                Console.WriteLine($"TODO Added files for GitLab CI.");
             }
 
+            var loader = _serviceProvider.GetRequiredService<ILoader>();
+            // var generator = serviceProvider.GetRequiredService<>();
+            // var templater = serviceProvider.GetRequiredService<>();
+            var templateInfos = loader.GetAllLanguagesAndTemplateNames().ToList();
+            Console.WriteLine("n    Name   Languages");
+            for (int i = 0; i < templateInfos.Count(); i++)
+            {
+                Console.WriteLine($"{i + 1}    {templateInfos[i].TemplateName}    {templateInfos[i].Language}");
+            }
+
+            //var template = loader.Load(language, )
         }
     }
 }
