@@ -1,15 +1,24 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
+using Model;
 
 namespace Scaffold
 {
     static class Program
     {
+        static List<Template> templates = new List<Template>() 
+        { 
+            new Template() { TemplateName = "tl1", Language="c#" },
+            new Template() { TemplateName = "tl2", Language="go" },
+            new Template() { TemplateName = "tl3", Language="go" },
+            new Template() { TemplateName = "tl4", Language="c#" },
+        };
+
         private static async Task<int> Main(string[] args)
         {
             // var services = new ServiceCollection();
@@ -27,17 +36,21 @@ namespace Scaffold
                 new Option<bool>(new[] {"-l", "--list"}, "Displays the entire list of templates"),
             };
 
-            var languageOption = new Option<string>(new[] { "-lang", "--language" }, "The language of the template to create. Depends on the template") { IsRequired = true };
-            languageOption.FromAmong("c#", "C#", "csharp", "go", "GO");
+            //var languageOption = new Option<string>(new[] { "-lang", "--language" }, "The language of the template to create. Depends on the template") { IsRequired = true };
+            //languageOption.FromAmong("c#", "C#", "csharp", "go", "GO");
 
-            var outputOption = new Option<DirectoryInfo>(new[] { "-o", "--output" }, "Sets the location where the template will be created");
-            outputOption.ExistingOnly();
+            //var outputOption = new Option<DirectoryInfo>(new[] { "-o", "--output" }, "Sets the location where the template will be created");
+            //outputOption.ExistingOnly();
+
+            //var templateArgument = new Argument<string>("template", "The template used to create the project when executing the command");
+            //templateArgument.FromAmong(templates.Select(x => x.Name).ToArray());
 
             var createCommand = new Command("create", "Create a project using the specified template")
             {
+                new Argument<Template>("template-name", "The template used to create the project when executing the command").FromAmong(templates.Select(x => x.TemplateName).ToArray()),
                 new Option<string>(new[] {"-n", "--name"},              "Sets the name of the output data"),
-                outputOption,
-                languageOption,
+                new Option<DirectoryInfo>(new[] { "-o", "--output" },   "Sets the location where the template will be created").ExistingOnly(),
+                new Option<string>(new[] { "-lang", "--language" },     "The language of the template to create. Depends on the template") { IsRequired = true }.FromAmong("c#", "C#", "csharp", "go", "GO"),
                 new Option<string>(new[] {"-v", "--version"},           "Sets the SDK version"),
                 new Option<bool>(new[] {"--git"},                       "Adds Git support"),
                 new Option<bool>(new[] {"--docker"},                    "Adds Dockerfile support"),
@@ -54,11 +67,12 @@ namespace Scaffold
 
             createCommand.Handler =
                 CommandHandler
-                    .Create<string, DirectoryInfo, string, string, bool, bool, bool, bool, bool, bool, bool, bool,
+                    .Create<Template, string, DirectoryInfo, string, string, bool, bool, bool, bool, bool, bool, bool, bool,
                         bool, bool, bool>(CreateCall);
-            rootCommand.AddCommand(createCommand);
 
             rootCommand.Handler = CommandHandler.Create<bool>(EmptyCall);
+
+            rootCommand.AddCommand(createCommand);
 
             if (args.Length == 0)
             {
@@ -85,17 +99,16 @@ namespace Scaffold
         /// </summary>
         private static void ShowListTemplates()
         {
-            Console.WriteLine("n    Name            Languages");
-            Console.WriteLine("1    template1Name   C#, go");
-            Console.WriteLine("2    template2Name   C#, go");
-            Console.WriteLine("3    template3Name   C#");
-            Console.WriteLine("4    template4Name   C#");
-            Console.WriteLine("5    template5Name   go");
+            Console.WriteLine("n    Name   Languages");
+            for (int i = 0; i < templates.Count(); i++)
+            {
+                Console.WriteLine($"{i+1}    {templates[i].TemplateName}    {templates[i].Language}");
+            }
         }
 
         /// <summary>
         /// Create a project using the specified template
-        /// <param name="help"              >Show help and usage information.</param>
+        /// <param name="template"          >The template used to create the project when executing the command.</param>
         /// <param name="name"              >Sets the name of the output data.</param>
         /// <param name="output"            >Sets the location where the template will be created.</param>
         /// <param name="language"          >The language of the template to create. Depends on the template.</param>
@@ -112,12 +125,14 @@ namespace Scaffold
         /// <param name="githubworkflows"   >Adds files for GitHub Workflows.</param>
         /// <param name="gitlabci"          >Adds files for GitLab CI.</param>
         /// </summary>
-        private static void CreateCall(string name, DirectoryInfo output, string language, string version,
+        private static void CreateCall(Template template, string name, DirectoryInfo output, string language, string version,
                                        bool git, bool docker, bool kubernetes, bool gitignore, bool dockerignore,
                                        bool readme, bool contributing, bool license, bool codeofproduct,
                                        bool githubworkflows, bool gitlabci)
         {
-            Console.WriteLine($"Creating project from {language} template.");
+            Console.WriteLine($"Creating project from {template.TemplateName} template.");
+
+            Console.WriteLine($"Language is {language}.");
 
             if (output != null)
             {
@@ -128,7 +143,6 @@ namespace Scaffold
             {
                 Console.WriteLine($"The name of the output data set to {name}.");
             }
-            
 
             if (!string.IsNullOrEmpty(version))
             {
@@ -159,6 +173,7 @@ namespace Scaffold
             {
                 Console.WriteLine($"Added .dockerignore file.");
             }
+
             if (readme)
             {
                 Console.WriteLine($"Added README.md file.");
@@ -188,6 +203,7 @@ namespace Scaffold
             {
                 Console.WriteLine($"Added files for GitLab CI.");
             }
+
         }
     }
 }
