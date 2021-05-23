@@ -240,10 +240,10 @@ namespace Scaffold
             //var templater = _serviceProvider.GetRequiredService<ITemplater>();
 
             var tl = loader.Load(language, template);
-            //foreach (var item in tl.Files)
-            //{
-            //    Console.WriteLine(item.)
-            //}
+            foreach (var item in tl.Files)
+            {
+                Console.WriteLine(item.Info.FullName);
+            }
 
             //var template = loader.Load(language, )
         }
