@@ -29,7 +29,7 @@ namespace Loader.FileSystem
             {
                 foreach (var template in lang.GetDirectories())
                 {
-                    templateInfos.Add(new TemplateInfo {Language = lang.Name, TemplateName = template.Name});
+                    templateInfos.Add(new TemplateInfo {Language = lang.Name, Name = template.Name});
                 }
             }
 

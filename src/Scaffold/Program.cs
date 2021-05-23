@@ -23,8 +23,15 @@ namespace Scaffold
         {
             //args = new[] { "create", "hello-boy", "--git" };
 
+            // Check if there folder 'templates'
+            if (!new DirectoryInfo("templates").Exists)
+            {
+                Console.WriteLine("Directory 'templates' not found! Please put it in the same folder as Scaffold.exe");
+                return 0;
+            }
+
             // Add services.
-            _services.AddSingleton<ILoader, FileSystemLoader>(x => new FileSystemLoader("C:\\templates"));
+            _services.AddSingleton<ILoader, FileSystemLoader>(x => new FileSystemLoader("templates"));
             _services.AddSingleton<IGenerator, LocalGenerator>();
             _services.AddSingleton<ITemplater, RegexTemplater>();
 
@@ -35,26 +42,42 @@ namespace Scaffold
                 new Option<bool>(new[] {"-l", "--list"}, "Displays the entire list of templates"),
             };
 
-            var createArgument = new Argument<Template>("template-name", "The template used to create the project when executing the command");
+            var createArgument = new Argument<string>("template-name", "The template used to create the project when executing the command");
             createArgument.AddValidator(cr =>
                     {
                         var loader = _serviceProvider.GetRequiredService<ILoader>();
                         var templateInfos = loader.GetAllLanguagesAndTemplateNames().ToList();
 
-                        if (!templateInfos.Select(x => x.TemplateName).Contains(cr.Tokens[0].Value))
+                        // check if we have such template
+                        if (!templateInfos.Select(x => x.Name).Contains(cr.Tokens[0].Value))
                         {
-                            return $"'{cr.Tokens[0].Value}' there is no such template. To see entire list of templates use 'scaffold -l'";
+                            return $"Sorry, but there is no '{cr.Tokens[0].Value}' template. To see entire list of templates please use 'scaffold -l'";
                         }
 
                         return null;
                     });
+
+            var languageOption = new Option<string>(new[] { "-lang", "--language" }, "The language of the template to create. Depends on the template") { IsRequired = true };
+            languageOption.AddValidator(cr =>
+            {
+                var loader = _serviceProvider.GetRequiredService<ILoader>();
+                var templateInfos = loader.GetAllLanguagesAndTemplateNames().ToList();
+
+                // check if we have such language
+                if (!templateInfos.Select(x => x.Language).Contains(cr.Tokens[0].Value))
+                {
+                    return $"Sorry, but there is no '{cr.Tokens[0].Value}' program language in template folder. To see entire list of templates please use 'scaffold -l'";
+                }
+
+                return null;
+            });
 
             var createCommand = new Command("create", "Create a project using the specified template")
             {
                 createArgument,
                 new Option<string>(new[] {"-n", "--name"},              "Sets the name of the output data"),
                 new Option<DirectoryInfo>(new[] { "-o", "--output" },   "Sets the location where the template will be created").ExistingOnly(),
-                new Option<string>(new[] { "-lang", "--language" },     "The language of the template to create. Depends on the template") { IsRequired = true }.FromAmong("c#", "C#", "csharp", "go", "GO"),
+                languageOption,
                 new Option<string>(new[] {"-v", "--version"},           "Sets the SDK version"),
                 new Option<bool>(new[] {"--git"},                       "Adds Git support"),
                 new Option<bool>(new[] {"--docker"},                    "Adds Dockerfile support"),
@@ -71,7 +94,7 @@ namespace Scaffold
 
             createCommand.Handler =
                 CommandHandler
-                    .Create<Template, string, DirectoryInfo, string, string, bool, bool, bool, bool, bool, bool, bool, bool,
+                    .Create<string, string, DirectoryInfo, string, string, bool, bool, bool, bool, bool, bool, bool, bool,
                         bool, bool, bool>(CreateCall);
 
 
@@ -109,7 +132,7 @@ namespace Scaffold
             Console.WriteLine("n    Name   Languages");
             for (int i = 0; i < templateInfos.Count(); i++)
             {
-                Console.WriteLine($"{i + 1}    {templateInfos[i].TemplateName}    {templateInfos[i].Language}");
+                Console.WriteLine($"{i + 1}    {templateInfos[i].Name}    {templateInfos[i].Language}");
             }
         }
 
@@ -132,14 +155,14 @@ namespace Scaffold
         /// <param name="githubworkflows"   >Adds files for GitHub Workflows.</param>
         /// <param name="gitlabci"          >Adds files for GitLab CI.</param>
         /// </summary>
-        private static void CreateCall(Template template, string name, DirectoryInfo output, string language, string version,
+        private static void CreateCall(string template, string name, DirectoryInfo output, string language, string version,
                                        bool git, bool docker, bool kubernetes, bool gitignore, bool dockerignore,
                                        bool readme, bool contributing, bool license, bool codeofproduct,
                                        bool githubworkflows, bool gitlabci)
         {
-            Console.WriteLine($"Creating project from {template.TemplateName} template.");
+            Console.WriteLine($"Creating project from '{template}' template.");
 
-            Console.WriteLine($"Language is {language}.");
+            Console.WriteLine($"Language is '{language}'.");
 
             if (output != null)
             {
@@ -213,15 +236,14 @@ namespace Scaffold
 
             // Get required services.
             var loader = _serviceProvider.GetRequiredService<ILoader>();
-            // var generator = serviceProvider.GetRequiredService<>();
-            // var templater = serviceProvider.GetRequiredService<>();
+            //var generator = _serviceProvider.GetRequiredService<IGenerator>();
+            //var templater = _serviceProvider.GetRequiredService<ITemplater>();
 
-            var templateInfos = loader.GetAllLanguagesAndTemplateNames().ToList();
-            Console.WriteLine("n    Name   Languages");
-            for (int i = 0; i < templateInfos.Count(); i++)
-            {
-                Console.WriteLine($"{i + 1}    {templateInfos[i].TemplateName}    {templateInfos[i].Language}");
-            }
+            var tl = loader.Load(language, template);
+            //foreach (var item in tl.Files)
+            //{
+            //    Console.WriteLine(item.)
+            //}
 
             //var template = loader.Load(language, )
         }
