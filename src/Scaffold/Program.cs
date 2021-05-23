@@ -16,18 +16,13 @@ namespace Scaffold
 {
     static class Program
     {
-        static List<Template> templates = new List<Template>()
-        {
-            new Template() { TemplateName = "tl1", Language="c#" },
-            new Template() { TemplateName = "tl2", Language="go" },
-            new Template() { TemplateName = "tl3", Language="go" },
-            new Template() { TemplateName = "tl4", Language="c#" },
-        };
         private static readonly ServiceCollection _services = new ServiceCollection();
         private static ServiceProvider _serviceProvider;
 
         private static async Task<int> Main(string[] args)
         {
+            //args = new[] { "create", "hello-boy", "--git" };
+
             // Add services.
             _services.AddSingleton<ILoader, FileSystemLoader>(x => new FileSystemLoader("C:\\templates"));
             _services.AddSingleton<IGenerator, LocalGenerator>();
@@ -35,17 +30,28 @@ namespace Scaffold
 
             _serviceProvider = _services.BuildServiceProvider();
 
-            // Get required services.
-            // var v = serviceProvider.GetRequiredService<InterfaceType>();
-
             var rootCommand = new RootCommand
             {
                 new Option<bool>(new[] {"-l", "--list"}, "Displays the entire list of templates"),
             };
 
+            var createArgument = new Argument<Template>("template-name", "The template used to create the project when executing the command");
+            createArgument.AddValidator(cr =>
+                    {
+                        var loader = _serviceProvider.GetRequiredService<ILoader>();
+                        var templateInfos = loader.GetAllLanguagesAndTemplateNames().ToList();
+
+                        if (!templateInfos.Select(x => x.TemplateName).Contains(cr.Tokens[0].Value))
+                        {
+                            return $"'{cr.Tokens[0].Value}' there is no such template. To see entire list of templates use 'scaffold -l'";
+                        }
+
+                        return null;
+                    });
+
             var createCommand = new Command("create", "Create a project using the specified template")
             {
-                new Argument<Template>("template-name", "The template used to create the project when executing the command").FromAmong(templates.Select(x => x.TemplateName).ToArray()),
+                createArgument,
                 new Option<string>(new[] {"-n", "--name"},              "Sets the name of the output data"),
                 new Option<DirectoryInfo>(new[] { "-o", "--output" },   "Sets the location where the template will be created").ExistingOnly(),
                 new Option<string>(new[] { "-lang", "--language" },     "The language of the template to create. Depends on the template") { IsRequired = true }.FromAmong("c#", "C#", "csharp", "go", "GO"),
@@ -67,6 +73,7 @@ namespace Scaffold
                 CommandHandler
                     .Create<Template, string, DirectoryInfo, string, string, bool, bool, bool, bool, bool, bool, bool, bool,
                         bool, bool, bool>(CreateCall);
+
 
             rootCommand.Handler = CommandHandler.Create<bool>(EmptyCall);
 
@@ -204,9 +211,11 @@ namespace Scaffold
                 Console.WriteLine($"TODO Added files for GitLab CI.");
             }
 
+            // Get required services.
             var loader = _serviceProvider.GetRequiredService<ILoader>();
             // var generator = serviceProvider.GetRequiredService<>();
             // var templater = serviceProvider.GetRequiredService<>();
+
             var templateInfos = loader.GetAllLanguagesAndTemplateNames().ToList();
             Console.WriteLine("n    Name   Languages");
             for (int i = 0; i < templateInfos.Count(); i++)
