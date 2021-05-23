@@ -1,4 +1,5 @@
-// using Loader.FileSystem;
+using Loader.FileSystem;
+using System;
 using Xunit;
 
 namespace Loader.Tests
@@ -8,14 +9,16 @@ namespace Loader.Tests
         [Fact]
         public void LoadTemplate()
         {
-            // var loader = new FileSystemLoader("templates");
-            // var template = loader.Load("csharp", "webapi");
-            //
-            // Assert.NotNull(template);
-            // Assert.Equal("csharp", template.Language);
-            // Assert.Equal("webapi", template.Name);
-            // Assert.NotEmpty(template.Files);
-            // Assert.NotEmpty(template.Plugins);
+            var loader = new FileSystemLoader($"{Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)}\\.scaffold\\templates");
+            var template = loader.Load("c#", "tl1");
+
+            Assert.NotNull(template);
+            Assert.Equal("c#", template.Language);
+            Assert.Equal("tl1", template.Name);
+            Assert.NotEmpty(template.Files);
+
+            // in curent state we not use plugins
+            //Assert.NotEmpty(template.Plugins);
         }
     }
 }

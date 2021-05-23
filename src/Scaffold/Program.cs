@@ -24,14 +24,15 @@ namespace Scaffold
             //args = new[] { "create", "hello-boy", "--git" };
 
             // Check if there folder 'templates'
-            if (!new DirectoryInfo("templates").Exists)
+            var pathToTemplates = $"{Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)}\\.scaffold\\templates";
+            if (!new DirectoryInfo(pathToTemplates).Exists)
             {
-                Console.WriteLine("Directory 'templates' not found! Please put it in the same folder as Scaffold.exe");
+                Console.WriteLine($"Directory '{$"{Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)}\\.scaffold\\templates"}' not found!");
                 return 0;
             }
 
             // Add services.
-            _services.AddSingleton<ILoader, FileSystemLoader>(x => new FileSystemLoader("templates"));
+            _services.AddSingleton<ILoader, FileSystemLoader>(x => new FileSystemLoader(pathToTemplates));
             _services.AddSingleton<IGenerator, LocalGenerator>();
             _services.AddSingleton<ITemplater, RegexTemplater>();
 
