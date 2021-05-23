@@ -11,6 +11,7 @@ using Loader.FileSystem;
 using Microsoft.Extensions.DependencyInjection;
 using Model;
 using Templater.Regex;
+using System.Text.RegularExpressions;
 
 namespace Scaffold
 {
@@ -21,9 +22,7 @@ namespace Scaffold
 
         private static async Task<int> Main(string[] args)
         {
-            //args = new[] { "create", "hello-boy", "--git" };
-
-            // Check if there folder 'templates'
+            // Check if there folder 'templates'. It must be plasec in %user$/.scaffold/
             var pathToTemplates = $"{Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)}\\.scaffold\\templates";
             if (!new DirectoryInfo(pathToTemplates).Exists)
             {
@@ -31,18 +30,21 @@ namespace Scaffold
                 return 0;
             }
 
-            // Add services.
+            // Add services. Services is used to take needed class with certain interface
             _services.AddSingleton<ILoader, FileSystemLoader>(x => new FileSystemLoader(pathToTemplates));
             _services.AddSingleton<IGenerator, LocalGenerator>();
             _services.AddSingleton<ITemplater, RegexTemplater>();
 
             _serviceProvider = _services.BuildServiceProvider();
 
+            // Next we creating console commands
+            // This is root console command whith option -l
             var rootCommand = new RootCommand
             {
                 new Option<bool>(new[] {"-l", "--list"}, "Displays the entire list of templates"),
             };
 
+            // Some argument need to be created outside '{...}'. This need for adding extra validation
             var createArgument = new Argument<string>("template-name", "The template used to create the project when executing the command");
             createArgument.AddValidator(cr =>
             {
@@ -73,13 +75,14 @@ namespace Scaffold
                 return null;
             });
 
+            // This is 'create' console command for creating project from template
             var createCommand = new Command("create", "Create a project using the specified template")
             {
                 createArgument,
-                new Option<string>(new[] {"-n", "--name"},              "Sets the name of the output data"),
-                new Option<DirectoryInfo>(new[] { "-o", "--output" },   "Sets the location where the template will be created").ExistingOnly(),
+                new Option<string>(new[] {"-n", "--name"},              "Sets the project name"),
+                new Option<DirectoryInfo>(new[] { "-o", "--output" },   "Sets the location where the template will be created"),
                 languageOption,
-                new Option<string>(new[] {"-v", "--version"},           "Sets the SDK version"),
+                new Option<string>(new[] {"-v", "--version"},           "Sets the SDK version"){ IsRequired = true },
                 new Option<bool>(new[] {"--git"},                       "Adds Git support"),
                 new Option<bool>(new[] {"--docker"},                    "Adds Dockerfile support"),
                 new Option<bool>(new[] {"-kn", "--kubernetes"},         "Adds Kubernetes support"),
@@ -93,16 +96,19 @@ namespace Scaffold
                 new Option<bool>(new[] {"-glci", "--gitlabci"},         "Adds files for GitLab CI"),
             };
 
+            // Method is used for processing create command
             createCommand.Handler =
                 CommandHandler
                     .Create<string, string, DirectoryInfo, string, string, bool, bool, bool, bool, bool, bool, bool, bool,
                         bool, bool, bool>(CreateCall);
 
-
+            // Method is used for processing scaffold.exe call
             rootCommand.Handler = CommandHandler.Create<bool>(EmptyCall);
 
+            // Adding createCommand to rootCommand
             rootCommand.AddCommand(createCommand);
 
+            // If scaffold.exe calls without anything, need to show help
             if (args.Length == 0)
             {
                 return await rootCommand.InvokeAsync(new[] { "-h" });
@@ -130,6 +136,7 @@ namespace Scaffold
         {
             var loader = _serviceProvider.GetRequiredService<ILoader>();
             var templateInfos = loader.GetAllLanguagesAndTemplateNames().ToList();
+
             Console.WriteLine("n    Name   Languages");
             for (int i = 0; i < templateInfos.Count(); i++)
             {
@@ -138,9 +145,9 @@ namespace Scaffold
         }
 
         /// <summary>
-        /// Create a project using the specified template
+        /// Create a project using the specified template. This method will be called when using the create command
         /// <param name="template"          >The template used to create the project when executing the command.</param>
-        /// <param name="name"              >Sets the name of the output data.</param>
+        /// <param name="name"              >Sets the project name.</param>
         /// <param name="output"            >Sets the location where the template will be created.</param>
         /// <param name="language"          >The language of the template to create. Depends on the template.</param>
         /// <param name="version"           >Sets the SDK version.</param>
@@ -161,23 +168,86 @@ namespace Scaffold
                                        bool readme, bool contributing, bool license, bool codeofproduct,
                                        bool githubworkflows, bool gitlabci)
         {
-            Console.WriteLine($"Creating project from '{template}' template.");
-
-            Console.WriteLine($"Language is '{language}'.");
-
+            // Comput output folder
             if (output != null)
             {
-                Console.WriteLine($"TODO Output directory set to \"{output}\".");
+                if (!output.Exists)
+                {
+                    Console.WriteLine($"There is no directory '{output.FullName}'.");
+
+                    // Wait to confirm creating directory
+                    ConsoleKey response;
+                    do
+                    {
+                        Console.Write("Create directory? [y/n] ");
+                        response = Console.ReadKey(false).Key;
+                        if (response != ConsoleKey.Enter)
+                        {
+                            Console.WriteLine();
+                        }
+                    } while (response != ConsoleKey.Y && response != ConsoleKey.N);
+
+                    // If confirmed
+                    if (response == ConsoleKey.Y)
+                    {
+                        try
+                        {
+                            output.Create();
+                        }
+                        catch (Exception e)
+                        {
+                            Console.WriteLine("Can`t create directory!");
+                            Console.WriteLine(e.Message);
+                            return;
+                        }
+                        if (!output.Exists)
+                        {
+                            Console.WriteLine("Can`t create directory!");
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("Interrupted!");
+                        return;
+                    }
+                }
+            }
+            else
+            {
+                // Standart directory - folder that hold scaffold.exe file
+                output = new DirectoryInfo(Environment.CurrentDirectory);
             }
 
-            if (!string.IsNullOrEmpty(name))
+            // Computing name of the project
+            if (string.IsNullOrEmpty(name))
             {
-                Console.WriteLine($"TODO The name of the output data set to {name}.");
+                name = "unnamed";
             }
+
+            // Check if name is correct
+            if (!Regex.IsMatch(name, @"^[a-zA-Z][\w]+$"))
+            {
+                Console.WriteLine($"Incorrect project name: '{name}'! Please use only Latin symbols, numbers and underscore");
+                return;
+            }
+
+            // Check if there such directory compiled by output directory and project name
+            if (new DirectoryInfo($"{output.FullName}\\{name}").Exists)
+            {
+                int i = 0;
+                // Folder must be unique
+                while (new DirectoryInfo($"{output.FullName}\\{name}{++i}").Exists) ;
+                name = $"{name}{i}";
+            }
+
+            var pathToProject = $"{output.FullName}\\{name}";
+            Console.WriteLine($"Project will be created in {pathToProject}.");
+            new DirectoryInfo(pathToProject).Create();
 
             if (!string.IsNullOrEmpty(version))
             {
-                Console.WriteLine($"TODO The SDK version set to {version}.");
+                Console.WriteLine($"The SDK version set to {version}.");
             }
 
             if (git)
@@ -235,21 +305,33 @@ namespace Scaffold
                 Console.WriteLine($"TODO Added files for GitLab CI.");
             }
 
+            Console.WriteLine($"Creating project from '{template}' template.");
+
+            Console.WriteLine($"Language is '{language}'.");
+
             // Get required services.
             var loader = _serviceProvider.GetRequiredService<ILoader>();
             var generator = _serviceProvider.GetRequiredService<IGenerator>();
-            //var templater = _serviceProvider.GetRequiredService<ITemplater>();
+            var templater = _serviceProvider.GetRequiredService<ITemplater>();
 
+            var ctx = new Context() { Description = @"TODO description", ProjectName = name, Version = version };
+
+            // Load template (with all files)
             var tl = loader.Load(language, template);
 
-            //foreach (var item in tl.Files)
-            //{
-            //    Console.WriteLine(item.Info.FullName);
+            // Generate project
+            var notProcessedProject = generator.Generate(pathToProject, tl);
+
+            // Replace {{ .<some> }} with things from context
+            var project = templater.Substitute(ctx, notProcessedProject);
+
+            //if (project.Compiles()) { 
+            Console.WriteLine("Project crated successfully");
             //}
-
-            generator.Generate(Environment.CurrentDirectory, tl);
-
-            //var template = loader.Load(language, )
+            //else
+            //{
+            //    Console.WriteLine("Project not compiled!");
+            //}
         }
     }
 }

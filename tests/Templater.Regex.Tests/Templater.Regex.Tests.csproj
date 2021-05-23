@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFramework>net5.0</TargetFramework>
@@ -22,6 +22,8 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\src\Generator.Local\Generator.Local.csproj" />
+      <ProjectReference Include="..\..\src\Loader.FileSystem\Loader.FileSystem.csproj" />
       <ProjectReference Include="..\..\src\Templater.Regex\Templater.Regex.csproj" />
     </ItemGroup>
 
