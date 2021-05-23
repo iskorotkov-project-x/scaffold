@@ -10,15 +10,15 @@ namespace Loader.Tests
         public void LoadTemplate()
         {
             // Arrange
-            var loader = new FileSystemLoader($"{Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)}\\.scaffold\\templates");
+            var loader = new FileSystemLoader(Environment.GetEnvironmentVariable("SCAFFOLD_TEMPLATES"));
 
             // Act
-            var template = loader.Load("c#", "tl1");
+            var template = loader.Load("c#", "console");
             
             // Assert
             Assert.NotNull(template);
             Assert.Equal("c#", template.Language);
-            Assert.Equal("tl1", template.Name);
+            Assert.Equal("console", template.Name);
             Assert.NotEmpty(template.Files);
 
             // in current state we not use plugins

@@ -14,8 +14,8 @@ namespace Templater.Tests
         public void SubstituteTemplates()
         {
             // Arrange
-            var loader = new FileSystemLoader($"{Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)}\\.scaffold\\templates");
-            var tl = loader.Load("c#", "tl1");
+            var loader = new FileSystemLoader(Environment.GetEnvironmentVariable("SCAFFOLD_TEMPLATES"));
+            var tl = loader.Load("c#", "console");
             var generator = new LocalGenerator();
 
             var di = new DirectoryInfo($"{Environment.CurrentDirectory}/testProject");
@@ -31,7 +31,7 @@ namespace Templater.Tests
             // Act
             var templatedProject = templater.Substitute(new Context {
                 ProjectName = "testProject",
-                Description = "тестовый c# проект",
+                Description = "test c# project",
                 Version = "net5.0",
             }, project);
 
