@@ -13,14 +13,6 @@ namespace Templater.Tests
         [Fact]
         public void SubstituteTemplates()
         {
-            //var templater = new RegexTemplater("/path/to/project");
-            //var ctx = new Context
-            //{
-            //    ProjectName = "some-project-name",
-            //    Version = "net5.0",
-            //    Description = "New project for a new idea"
-            //};
-
             // Arrange
             var loader = new FileSystemLoader($"{Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)}\\.scaffold\\templates");
             var tl = loader.Load("c#", "tl1");
