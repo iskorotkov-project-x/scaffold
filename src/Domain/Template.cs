@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 
 namespace Model
 {
@@ -7,6 +8,8 @@ namespace Model
     /// </summary>
     public class Template : TemplateInfo
     {
+        public DirectoryInfo RootDirectory { get; init; }
+
         // All files of template
         public IEnumerable<File> Files { get; init; }
         public IEnumerable<Plugin> Plugins { get; init; }

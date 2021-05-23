@@ -4,6 +4,6 @@ namespace Business
 {
     public interface IGenerator
     {
-        Project Generate(string pathToProject);
+        Project Generate(string pathToProject, Template template);
     }
 }

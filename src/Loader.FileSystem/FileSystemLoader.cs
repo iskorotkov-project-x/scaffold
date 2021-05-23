@@ -51,6 +51,7 @@ namespace Loader.FileSystem
                 Name = template,
                 Files = Directory.GetFiles(dirPath, "*.*", SearchOption.AllDirectories)
                     .Select(x => new Model.File() { Info = new FileInfo(x) }),
+                RootDirectory = new DirectoryInfo(dirPath),
             };
         }
     }

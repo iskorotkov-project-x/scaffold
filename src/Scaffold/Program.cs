@@ -45,18 +45,18 @@ namespace Scaffold
 
             var createArgument = new Argument<string>("template-name", "The template used to create the project when executing the command");
             createArgument.AddValidator(cr =>
-                    {
-                        var loader = _serviceProvider.GetRequiredService<ILoader>();
-                        var templateInfos = loader.GetAllLanguagesAndTemplateNames().ToList();
+            {
+                var loader = _serviceProvider.GetRequiredService<ILoader>();
+                var templateInfos = loader.GetAllLanguagesAndTemplateNames().ToList();
 
-                        // check if we have such template
-                        if (!templateInfos.Select(x => x.Name).Contains(cr.Tokens[0].Value))
-                        {
-                            return $"Sorry, but there is no '{cr.Tokens[0].Value}' template. To see entire list of templates please use 'scaffold -l'";
-                        }
+                // check if we have such template
+                if (!templateInfos.Select(x => x.Name).Contains(cr.Tokens[0].Value))
+                {
+                    return $"Sorry, but there is no '{cr.Tokens[0].Value}' template. To see entire list of templates please use 'scaffold -l'";
+                }
 
-                        return null;
-                    });
+                return null;
+            });
 
             var languageOption = new Option<string>(new[] { "-lang", "--language" }, "The language of the template to create. Depends on the template") { IsRequired = true };
             languageOption.AddValidator(cr =>
@@ -237,14 +237,17 @@ namespace Scaffold
 
             // Get required services.
             var loader = _serviceProvider.GetRequiredService<ILoader>();
-            //var generator = _serviceProvider.GetRequiredService<IGenerator>();
+            var generator = _serviceProvider.GetRequiredService<IGenerator>();
             //var templater = _serviceProvider.GetRequiredService<ITemplater>();
 
             var tl = loader.Load(language, template);
-            foreach (var item in tl.Files)
-            {
-                Console.WriteLine(item.Info.FullName);
-            }
+
+            //foreach (var item in tl.Files)
+            //{
+            //    Console.WriteLine(item.Info.FullName);
+            //}
+
+            generator.Generate(Environment.CurrentDirectory, tl);
 
             //var template = loader.Load(language, )
         }

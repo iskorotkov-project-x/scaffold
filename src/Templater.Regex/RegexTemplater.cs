@@ -5,12 +5,7 @@ namespace Templater.Regex
 {
     public class RegexTemplater : ITemplater
     {
-        public RegexTemplater(string pathToProject)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public Project Substitute(Context ctx)
+        public Project Substitute(Context ctx, Project project)
         {
             throw new System.NotImplementedException();
         }
