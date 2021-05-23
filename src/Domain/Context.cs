@@ -1,7 +1,7 @@
 namespace Model
 {
     /// <summary>
-    /// Contex in which creatin project.
+    /// Contex in which creating project.
     /// </summary>
     public class Context
     {
