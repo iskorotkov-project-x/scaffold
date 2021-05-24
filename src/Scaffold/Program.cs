@@ -22,11 +22,23 @@ namespace Scaffold
 
         private static async Task<int> Main(string[] args)
         {
-            // Check if there folder 'templates'. It must be plasec in %user$/.scaffold/
-            var pathToTemplates = $"{Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)}\\.scaffold\\templates";
+            string pathToTemplates = "";
+            try
+            {
+                pathToTemplates = Environment.GetEnvironmentVariable("SCAFFOLD_TEMPLATES");
+            }
+            catch (Exception) { }
+
+            if (string.IsNullOrEmpty(pathToTemplates))
+            {
+                pathToTemplates = $"{Environment.CurrentDirectory}\\templates";
+            }
+
             if (!new DirectoryInfo(pathToTemplates).Exists)
             {
-                Console.WriteLine($"Directory '{$"{Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)}\\.scaffold\\templates"}' not found!");
+                Console.WriteLine($"Directory '{pathToTemplates}' not found!");
+                Console.WriteLine($"Press any key to continue...");
+                Console.ReadKey();
                 return 0;
             }
 
@@ -327,6 +339,8 @@ namespace Scaffold
 
             //if (project.Compiles()) { 
             Console.WriteLine("Project crated successfully");
+            Console.WriteLine($"Press any key to continue...");
+            Console.ReadKey();
             //}
             //else
             //{
