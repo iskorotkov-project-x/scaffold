@@ -33,6 +33,8 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    needs: [build]
+    
     steps:
     - uses: actions/checkout@v2
     - name: Upload templates
@@ -40,6 +42,19 @@ jobs:
       with:
         name: templates
         path: templates/
+
+      # Create release.
+    - name: Zip templates
+      uses: montudor/action-zip@v1
+      with:
+        args: zip -qq -r templates.zip templates
+    - name: Upload templates for release
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: templates.zip
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
 
   publish:
 
@@ -91,26 +106,5 @@ jobs:
         files: |
           scaffold-${{ matrix.runtime }}-${{ matrix.type }}
           scaffold-${{ matrix.runtime }}-${{ matrix.type }}.exe
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
-
-  publish-static:
-
-    runs-on: ubuntu-latest
-
-    needs: [build, static]
-    
-    steps:
-    - name: Download zipped templates
-      uses: actions/download-artifact@v2.0.9
-      if: startsWith(github.ref, 'refs/tags/')
-      with:
-        name: templates
-        path: templates.zip
-    - name: Upload artifacts for release
-      uses: softprops/action-gh-release@v1
-      if: startsWith(github.ref, 'refs/tags/')
-      with:
-        files: templates.zip
       env:
         GITHUB_TOKEN: ${{ github.token }}
