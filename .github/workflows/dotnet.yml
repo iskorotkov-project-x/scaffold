@@ -26,6 +26,8 @@ jobs:
       run: dotnet restore
     - name: Build
       run: dotnet build -c ${{ matrix.configuration }} --no-restore
+    - name: Setup environment variables
+      run: export SCAFFOLD_TEMPLATES=$(pwd)/templates
     - name: Test
       run: dotnet test -c ${{ matrix.configuration }} --no-build --verbosity normal
 
@@ -60,6 +62,17 @@ jobs:
         path: |
           scaffold-${{ matrix.runtime }}
           scaffold-${{ matrix.runtime }}.exe
+    - name: Upload templates
+      uses: actions/upload-artifact@v2.2.3
+      with:
+        name: templates
+        path: templates/
+    - name: Download zipped templates
+      uses: actions/download-artifact@v2.0.9
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        name: templates
+        path: templates.zip
     - name: Create a release
       uses: softprops/action-gh-release@v1
       if: startsWith(github.ref, 'refs/tags/')
@@ -67,5 +80,6 @@ jobs:
         files: |
           scaffold-${{ matrix.runtime }}
           scaffold-${{ matrix.runtime }}.exe
+          templates.zip
       env:
         GITHUB_TOKEN: ${{ github.token }}
