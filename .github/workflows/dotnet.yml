@@ -26,10 +26,8 @@ jobs:
       run: dotnet restore
     - name: Build
       run: dotnet build -c ${{ matrix.configuration }} --no-restore
-    - name: Setup environment variables
-      run: export SCAFFOLD_TEMPLATES=$(pwd)/templates
     - name: Test
-      run: dotnet test -c ${{ matrix.configuration }} --no-build --verbosity normal
+      run: SCAFFOLD_TEMPLATES=$(pwd)/templates dotnet test -c ${{ matrix.configuration }} --no-build --verbosity normal
 
   publish:
 
