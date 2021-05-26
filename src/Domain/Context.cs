@@ -1,5 +1,8 @@
 namespace Model
 {
+    /// <summary>
+    /// Contex in which creating project.
+    /// </summary>
     public class Context
     {
         public string ProjectName { get; init; }

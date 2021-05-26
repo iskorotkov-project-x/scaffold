@@ -5,53 +5,96 @@ using System.CommandLine.Invocation;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Business;
+using Generator.Local;
+using Loader.FileSystem;
+using Microsoft.Extensions.DependencyInjection;
 using Model;
+using Templater.Regex;
+using System.Text.RegularExpressions;
 
 namespace Scaffold
 {
     static class Program
     {
-        static List<Template> templates = new List<Template>() 
-        { 
-            new Template() { TemplateName = "tl1", Language="c#" },
-            new Template() { TemplateName = "tl2", Language="go" },
-            new Template() { TemplateName = "tl3", Language="go" },
-            new Template() { TemplateName = "tl4", Language="c#" },
-        };
+        private static readonly ServiceCollection _services = new ServiceCollection();
+        private static ServiceProvider _serviceProvider;
 
         private static async Task<int> Main(string[] args)
         {
-            // var services = new ServiceCollection();
+            string pathToTemplates = "";
+            try
+            {
+                pathToTemplates = Environment.GetEnvironmentVariable("SCAFFOLD_TEMPLATES");
+            }
+            catch (Exception) { }
 
-            // Add services.
-            // services.AddScoped<InterfaceType, RealType>();
+            if (string.IsNullOrEmpty(pathToTemplates))
+            {
+                pathToTemplates = $"{Environment.CurrentDirectory}\\templates";
+            }
 
-            // await using var serviceProvider = services.BuildServiceProvider();
+            if (!new DirectoryInfo(pathToTemplates).Exists)
+            {
+                Console.WriteLine($"Directory '{pathToTemplates}' not found!");
+                Console.WriteLine($"Press any key to continue...");
+                Console.ReadKey();
+                return 0;
+            }
 
-            // Get required services.
-            // var v = serviceProvider.GetRequiredService<InterfaceType>();
+            // Add services. Services is used to take needed class with certain interface
+            _services.AddSingleton<ILoader, FileSystemLoader>(x => new FileSystemLoader(pathToTemplates));
+            _services.AddSingleton<IGenerator, LocalGenerator>();
+            _services.AddSingleton<ITemplater, RegexTemplater>();
 
+            _serviceProvider = _services.BuildServiceProvider();
+
+            // Next we creating console commands
+            // This is root console command whith option -l
             var rootCommand = new RootCommand
             {
                 new Option<bool>(new[] {"-l", "--list"}, "Displays the entire list of templates"),
             };
 
-            //var languageOption = new Option<string>(new[] { "-lang", "--language" }, "The language of the template to create. Depends on the template") { IsRequired = true };
-            //languageOption.FromAmong("c#", "C#", "csharp", "go", "GO");
+            // Some argument need to be created outside '{...}'. This need for adding extra validation
+            var createArgument = new Argument<string>("template-name", "The template used to create the project when executing the command");
+            createArgument.AddValidator(cr =>
+            {
+                var loader = _serviceProvider.GetRequiredService<ILoader>();
+                var templateInfos = loader.GetAllLanguagesAndTemplateNames().ToList();
 
-            //var outputOption = new Option<DirectoryInfo>(new[] { "-o", "--output" }, "Sets the location where the template will be created");
-            //outputOption.ExistingOnly();
+                // check if we have such template
+                if (!templateInfos.Select(x => x.Name).Contains(cr.Tokens[0].Value))
+                {
+                    return $"Sorry, but there is no '{cr.Tokens[0].Value}' template. To see entire list of templates please use 'scaffold -l'";
+                }
 
-            //var templateArgument = new Argument<string>("template", "The template used to create the project when executing the command");
-            //templateArgument.FromAmong(templates.Select(x => x.Name).ToArray());
+                return null;
+            });
 
+            var languageOption = new Option<string>(new[] { "-lang", "--language" }, "The language of the template to create. Depends on the template") { IsRequired = true };
+            languageOption.AddValidator(cr =>
+            {
+                var loader = _serviceProvider.GetRequiredService<ILoader>();
+                var templateInfos = loader.GetAllLanguagesAndTemplateNames().ToList();
+
+                // check if we have such language
+                if (!templateInfos.Select(x => x.Language).Contains(cr.Tokens[0].Value))
+                {
+                    return $"Sorry, but there is no '{cr.Tokens[0].Value}' program language in template folder. To see entire list of templates please use 'scaffold -l'";
+                }
+
+                return null;
+            });
+
+            // This is 'create' console command for creating project from template
             var createCommand = new Command("create", "Create a project using the specified template")
             {
-                new Argument<Template>("template-name", "The template used to create the project when executing the command").FromAmong(templates.Select(x => x.TemplateName).ToArray()),
-                new Option<string>(new[] {"-n", "--name"},              "Sets the name of the output data"),
-                new Option<DirectoryInfo>(new[] { "-o", "--output" },   "Sets the location where the template will be created").ExistingOnly(),
-                new Option<string>(new[] { "-lang", "--language" },     "The language of the template to create. Depends on the template") { IsRequired = true }.FromAmong("c#", "C#", "csharp", "go", "GO"),
-                new Option<string>(new[] {"-v", "--version"},           "Sets the SDK version"),
+                createArgument,
+                new Option<string>(new[] {"-n", "--name"},              "Sets the project name"),
+                new Option<DirectoryInfo>(new[] { "-o", "--output" },   "Sets the location where the template will be created"),
+                languageOption,
+                new Option<string>(new[] {"-v", "--version"},           "Sets the SDK version"){ IsRequired = true },
                 new Option<bool>(new[] {"--git"},                       "Adds Git support"),
                 new Option<bool>(new[] {"--docker"},                    "Adds Dockerfile support"),
                 new Option<bool>(new[] {"-kn", "--kubernetes"},         "Adds Kubernetes support"),
@@ -65,15 +108,19 @@ namespace Scaffold
                 new Option<bool>(new[] {"-glci", "--gitlabci"},         "Adds files for GitLab CI"),
             };
 
+            // Method is used for processing create command
             createCommand.Handler =
                 CommandHandler
-                    .Create<Template, string, DirectoryInfo, string, string, bool, bool, bool, bool, bool, bool, bool, bool,
+                    .Create<string, string, DirectoryInfo, string, string, bool, bool, bool, bool, bool, bool, bool, bool,
                         bool, bool, bool>(CreateCall);
 
+            // Method is used for processing scaffold.exe call
             rootCommand.Handler = CommandHandler.Create<bool>(EmptyCall);
 
+            // Adding createCommand to rootCommand
             rootCommand.AddCommand(createCommand);
 
+            // If scaffold.exe calls without anything, need to show help
             if (args.Length == 0)
             {
                 return await rootCommand.InvokeAsync(new[] { "-h" });
@@ -99,17 +146,20 @@ namespace Scaffold
         /// </summary>
         private static void ShowListTemplates()
         {
+            var loader = _serviceProvider.GetRequiredService<ILoader>();
+            var templateInfos = loader.GetAllLanguagesAndTemplateNames().ToList();
+
             Console.WriteLine("n    Name   Languages");
-            for (int i = 0; i < templates.Count(); i++)
+            for (int i = 0; i < templateInfos.Count(); i++)
             {
-                Console.WriteLine($"{i+1}    {templates[i].TemplateName}    {templates[i].Language}");
+                Console.WriteLine($"{i + 1}    {templateInfos[i].Name}    {templateInfos[i].Language}");
             }
         }
 
         /// <summary>
-        /// Create a project using the specified template
+        /// Create a project using the specified template. This method will be called when using the create command
         /// <param name="template"          >The template used to create the project when executing the command.</param>
-        /// <param name="name"              >Sets the name of the output data.</param>
+        /// <param name="name"              >Sets the project name.</param>
         /// <param name="output"            >Sets the location where the template will be created.</param>
         /// <param name="language"          >The language of the template to create. Depends on the template.</param>
         /// <param name="version"           >Sets the SDK version.</param>
@@ -125,24 +175,87 @@ namespace Scaffold
         /// <param name="githubworkflows"   >Adds files for GitHub Workflows.</param>
         /// <param name="gitlabci"          >Adds files for GitLab CI.</param>
         /// </summary>
-        private static void CreateCall(Template template, string name, DirectoryInfo output, string language, string version,
+        private static void CreateCall(string template, string name, DirectoryInfo output, string language, string version,
                                        bool git, bool docker, bool kubernetes, bool gitignore, bool dockerignore,
                                        bool readme, bool contributing, bool license, bool codeofproduct,
                                        bool githubworkflows, bool gitlabci)
         {
-            Console.WriteLine($"Creating project from {template.TemplateName} template.");
-
-            Console.WriteLine($"Language is {language}.");
-
+            // Comput output folder
             if (output != null)
             {
-                Console.WriteLine($"Output directory set to \"{output}\".");
+                if (!output.Exists)
+                {
+                    Console.WriteLine($"There is no directory '{output.FullName}'.");
+
+                    // Wait to confirm creating directory
+                    ConsoleKey response;
+                    do
+                    {
+                        Console.Write("Create directory? [y/n] ");
+                        response = Console.ReadKey(false).Key;
+                        if (response != ConsoleKey.Enter)
+                        {
+                            Console.WriteLine();
+                        }
+                    } while (response != ConsoleKey.Y && response != ConsoleKey.N);
+
+                    // If confirmed
+                    if (response == ConsoleKey.Y)
+                    {
+                        try
+                        {
+                            output.Create();
+                        }
+                        catch (Exception e)
+                        {
+                            Console.WriteLine("Can`t create directory!");
+                            Console.WriteLine(e.Message);
+                            return;
+                        }
+                        if (!output.Exists)
+                        {
+                            Console.WriteLine("Can`t create directory!");
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("Interrupted!");
+                        return;
+                    }
+                }
+            }
+            else
+            {
+                // Standart directory - folder that hold scaffold.exe file
+                output = new DirectoryInfo(Environment.CurrentDirectory);
             }
 
-            if (!string.IsNullOrEmpty(name))
+            // Computing name of the project
+            if (string.IsNullOrEmpty(name))
             {
-                Console.WriteLine($"The name of the output data set to {name}.");
+                name = "unnamed";
             }
+
+            // Check if name is correct
+            if (!Regex.IsMatch(name, @"^[a-zA-Z][\w]+$"))
+            {
+                Console.WriteLine($"Incorrect project name: '{name}'! Please use only Latin symbols, numbers and underscore");
+                return;
+            }
+
+            // Check if there such directory compiled by output directory and project name
+            if (new DirectoryInfo($"{output.FullName}\\{name}").Exists)
+            {
+                int i = 0;
+                // Folder must be unique
+                while (new DirectoryInfo($"{output.FullName}\\{name}{++i}").Exists) ;
+                name = $"{name}{i}";
+            }
+
+            var pathToProject = $"{output.FullName}\\{name}";
+            Console.WriteLine($"Project will be created in {pathToProject}.");
+            new DirectoryInfo(pathToProject).Create();
 
             if (!string.IsNullOrEmpty(version))
             {
@@ -151,59 +264,88 @@ namespace Scaffold
 
             if (git)
             {
-                Console.WriteLine($"Added git support.");
+                Console.WriteLine($"TODO Added git support.");
             }
 
             if (docker)
             {
-                Console.WriteLine($"Added Dockerfile support.");
+                Console.WriteLine($"TODO Added Dockerfile support.");
             }
 
             if (kubernetes)
             {
-                Console.WriteLine($"Added Kubernetes support.");
+                Console.WriteLine($"TODO Added Kubernetes support.");
             }
 
             if (gitignore)
             {
-                Console.WriteLine($"Added .gitignore file.");
+                Console.WriteLine($"TODO Added .gitignore file.");
             }
 
             if (dockerignore)
             {
-                Console.WriteLine($"Added .dockerignore file.");
+                Console.WriteLine($"TODO Added .dockerignore file.");
             }
 
             if (readme)
             {
-                Console.WriteLine($"Added README.md file.");
+                Console.WriteLine($"TODO Added README.md file.");
             }
 
             if (contributing)
             {
-                Console.WriteLine($"Added CONTRIBUTING.md file.");
+                Console.WriteLine($"TODO Added CONTRIBUTING.md file.");
             }
 
             if (license)
             {
-                Console.WriteLine($"Added LICENSE file.");
+                Console.WriteLine($"TODO Added LICENSE file.");
             }
 
             if (codeofproduct)
             {
-                Console.WriteLine($"Added CODE_OF_PRODUCT.md file.");
+                Console.WriteLine($"TODO Added CODE_OF_PRODUCT.md file.");
             }
 
             if (githubworkflows)
             {
-                Console.WriteLine($"Added files for GitHub Workflows.");
+                Console.WriteLine($"TODO Added files for GitHub Workflows.");
             }
 
             if (gitlabci)
             {
-                Console.WriteLine($"Added files for GitLab CI.");
+                Console.WriteLine($"TODO Added files for GitLab CI.");
             }
 
+            Console.WriteLine($"Creating project from '{template}' template.");
+
+            Console.WriteLine($"Language is '{language}'.");
+
+            // Get required services.
+            var loader = _serviceProvider.GetRequiredService<ILoader>();
+            var generator = _serviceProvider.GetRequiredService<IGenerator>();
+            var templater = _serviceProvider.GetRequiredService<ITemplater>();
+
+            var ctx = new Context() { Description = @"TODO description", ProjectName = name, Version = version };
+
+            // Load template (with all files)
+            var tl = loader.Load(language, template);
+
+            // Generate project
+            var notProcessedProject = generator.Generate(pathToProject, tl);
+
+            // Replace {{ .<some> }} with things from context
+            var project = templater.Substitute(ctx, notProcessedProject);
+
+            //if (project.Compiles()) { 
+            Console.WriteLine("Project crated successfully");
+            Console.WriteLine($"Press any key to continue...");
+            Console.ReadKey();
+            //}
+            //else
+            //{
+            //    Console.WriteLine("Project not compiled!");
+            //}
         }
     }
 }

@@ -24,6 +24,7 @@
     <ItemGroup>
       <ProjectReference Include="..\..\src\Generator.Local\Generator.Local.csproj" />
       <ProjectReference Include="..\..\src\Domain\Domain.csproj" />
+      <ProjectReference Include="..\..\src\Loader.FileSystem\Loader.FileSystem.csproj" />
     </ItemGroup>
 
 </Project>

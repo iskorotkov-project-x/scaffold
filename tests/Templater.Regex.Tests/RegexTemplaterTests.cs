@@ -1,5 +1,9 @@
-// using Model;
-// using Templater.Regex;
+using Generator.Local;
+using Loader.FileSystem;
+using Model;
+using System;
+using System.IO;
+using Templater.Regex;
 using Xunit;
 
 namespace Templater.Tests
@@ -9,22 +13,36 @@ namespace Templater.Tests
         [Fact]
         public void SubstituteTemplates()
         {
-            // var templater = new RegexTemplater("/path/to/project");
-            // var ctx = new Context
-            // {
-            //     ProjectName = "some-project-name",
-            //     Version = "net5.0",
-            //     Description = "New project for a new idea"
-            // };
-            // var project = templater.Substitute(ctx);
-            //
-            // Assert.NotEmpty(project.ProcessedFiles);
-            // Assert.True(project.Compiles());
-            //
-            // foreach (var file in project.ProcessedFiles)
-            // {
-            //     Assert.False(file.ContainsTemplates());
-            // }
+            // Arrange
+            var loader = new FileSystemLoader(Environment.GetEnvironmentVariable("SCAFFOLD_TEMPLATES"));
+            var tl = loader.Load("c#", "console");
+            var generator = new LocalGenerator();
+
+            var di = new DirectoryInfo($"{Environment.CurrentDirectory}/testProject");
+            if (di.Exists)
+            {
+                di.Delete(true);
+            }
+
+            var project = generator.Generate($"{Environment.CurrentDirectory}/testProject", tl);
+
+            var templater = new RegexTemplater();
+
+            // Act
+            var templatedProject = templater.Substitute(new Context {
+                ProjectName = "testProject",
+                Description = "test c# project",
+                Version = "net5.0",
+            }, project);
+
+            // Assert
+            Assert.NotEmpty(templatedProject.ProcessedFiles);
+            //Assert.True(project.Compiles());
+
+            foreach (var file in templatedProject.ProcessedFiles)
+            {
+                Assert.False(file.ContainsTemplates());
+            }
         }
     }
 }
