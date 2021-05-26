@@ -40,6 +40,7 @@ jobs:
     strategy:
       matrix:
         runtime: [win-x64, win-x86, win-arm, win-arm64, linux-x64, linux-arm, linux-arm64, osx-x64]
+        type: [standalone, dependant]
 
     steps:
     - uses: actions/checkout@v2
@@ -48,38 +49,49 @@ jobs:
       with:
         dotnet-version: 5.0.x
     - name: Publish
-      run: dotnet publish -c Release -r ${{ matrix.runtime }} --self-contained false -p:PublishSingleFile=true -p:UseAppHost=true src/Scaffold/Scaffold.csproj
+      run: dotnet publish -c Release -r ${{ matrix.runtime }} -o publish --self-contained ${{ matrix.type == 'standalone' }} -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true -p:PublishTrimmed=${{ matrix.type == 'standalone' }} -p:UseAppHost=true src/Scaffold/Scaffold.csproj
+
+      # Move artifacts.
     - name: Move Windows artifact
       if: startsWith(matrix.runtime, 'win')
-      run: mv src/Scaffold/bin/Release/net5.0/${{ matrix.runtime }}/publish/Scaffold.exe scaffold-${{ matrix.runtime }}.exe
+      run: mv publish/Scaffold.exe scaffold-${{ matrix.runtime }}-${{ matrix.type }}.exe
     - name: Move non-Windows artifact
       if: ${{ !startsWith(matrix.runtime, 'win') }}
-      run: mv src/Scaffold/bin/Release/net5.0/${{ matrix.runtime }}/publish/Scaffold scaffold-${{ matrix.runtime }}
-    - name: Upload a Build Artifact
+      run: mv publish/Scaffold scaffold-${{ matrix.runtime }}-${{ matrix.type }}
+      
+      # Upload artifacts to workflow results.
+    - name: Upload a Windows build artifact
+      if: startsWith(matrix.runtime, 'win')
       uses: actions/upload-artifact@v2.2.3
       with:
-        name: scaffold-${{ matrix.runtime }}
-        path: |
-          scaffold-${{ matrix.runtime }}
-          scaffold-${{ matrix.runtime }}.exe
+        name: scaffold-${{ matrix.runtime }}-${{ matrix.type }}.exe
+        path: scaffold-${{ matrix.runtime }}-${{ matrix.type }}.exe
+    - name: Upload a non-Windows build artifact
+      if: ${{ !startsWith(matrix.runtime, 'win') }}
+      uses: actions/upload-artifact@v2.2.3
+      with:
+        name: scaffold-${{ matrix.runtime }}-${{ matrix.type }}
+        path: scaffold-${{ matrix.runtime }}-${{ matrix.type }}
     - name: Upload templates
       uses: actions/upload-artifact@v2.2.3
       with:
         name: templates
         path: templates/
+
+      # Publish release.
     - name: Download zipped templates
       uses: actions/download-artifact@v2.0.9
       if: startsWith(github.ref, 'refs/tags/')
       with:
         name: templates
         path: templates.zip
-    - name: Create a release
+    - name: Upload an artifact for release
       uses: softprops/action-gh-release@v1
       if: startsWith(github.ref, 'refs/tags/')
       with:
         files: |
-          scaffold-${{ matrix.runtime }}
-          scaffold-${{ matrix.runtime }}.exe
+          scaffold-${{ matrix.runtime }}-${{ matrix.type }}
+          scaffold-${{ matrix.runtime }}-${{ matrix.type }}.exe
           templates.zip
       env:
         GITHUB_TOKEN: ${{ github.token }}
