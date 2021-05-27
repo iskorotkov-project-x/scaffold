@@ -57,8 +57,8 @@ namespace Scaffold
             };
 
             // Some argument need to be created outside '{...}'. This need for adding extra validation
-            var createArgument = new Argument<string>("template-name", "The template used to create the project when executing the command");
-            createArgument.AddValidator(cr =>
+            var templateArgument = new Argument<string>("template-name", "The template used to create the project when executing the command");
+            templateArgument.AddValidator(cr =>
             {
                 var loader = _serviceProvider.GetRequiredService<ILoader>();
                 var templateInfos = loader.GetAllLanguagesAndTemplateNames().ToList();
@@ -72,8 +72,8 @@ namespace Scaffold
                 return null;
             });
 
-            var languageOption = new Option<string>(new[] { "-lang", "--language" }, "The language of the template to create. Depends on the template") { IsRequired = true };
-            languageOption.AddValidator(cr =>
+            var languageArgument = new Argument<string>("language", "The language of the template to create. Depends on the template");
+            languageArgument.AddValidator(cr =>
             {
                 var loader = _serviceProvider.GetRequiredService<ILoader>();
                 var templateInfos = loader.GetAllLanguagesAndTemplateNames().ToList();
@@ -90,10 +90,10 @@ namespace Scaffold
             // This is 'create' console command for creating project from template
             var createCommand = new Command("create", "Create a project using the specified template")
             {
-                createArgument,
+                languageArgument,
+                templateArgument,
                 new Option<string>(new[] {"-n", "--name"},              "Sets the project name"),
                 new Option<DirectoryInfo>(new[] { "-o", "--output" },   "Sets the location where the template will be created"),
-                languageOption,
                 new Option<string>(new[] {"-v", "--version"},           "Sets the SDK version"){ IsRequired = true },
                 new Option<bool>(new[] {"--git"},                       "Adds Git support"),
                 new Option<bool>(new[] {"--docker"},                    "Adds Dockerfile support"),
@@ -111,7 +111,7 @@ namespace Scaffold
             // Method is used for processing create command
             createCommand.Handler =
                 CommandHandler
-                    .Create<string, string, DirectoryInfo, string, string, bool, bool, bool, bool, bool, bool, bool, bool,
+                    .Create<string, string, string, DirectoryInfo, string, bool, bool, bool, bool, bool, bool, bool, bool,
                         bool, bool, bool>(CreateCall);
 
             // Method is used for processing scaffold.exe call
@@ -149,19 +149,19 @@ namespace Scaffold
             var loader = _serviceProvider.GetRequiredService<ILoader>();
             var templateInfos = loader.GetAllLanguagesAndTemplateNames().ToList();
 
-            Console.WriteLine("n    Name   Languages");
+            Console.WriteLine("n    Name        Languages");
             for (int i = 0; i < templateInfos.Count(); i++)
             {
-                Console.WriteLine($"{i + 1}    {templateInfos[i].Name}    {templateInfos[i].Language}");
+                Console.WriteLine(String.Format("{0,-5}{1,-12}{2,0}", i + 1, templateInfos[i].Name, templateInfos[i].Language));
             }
         }
 
         /// <summary>
         /// Create a project using the specified template. This method will be called when using the create command
+        /// <param name="language"          >The language of the template to create. Depends on the template.</param>
         /// <param name="template"          >The template used to create the project when executing the command.</param>
         /// <param name="name"              >Sets the project name.</param>
         /// <param name="output"            >Sets the location where the template will be created.</param>
-        /// <param name="language"          >The language of the template to create. Depends on the template.</param>
         /// <param name="version"           >Sets the SDK version.</param>
         /// <param name="git"               >Adds Git support.</param>
         /// <param name="docker"            >Adds Dockerfile support.</param>
@@ -175,7 +175,7 @@ namespace Scaffold
         /// <param name="githubworkflows"   >Adds files for GitHub Workflows.</param>
         /// <param name="gitlabci"          >Adds files for GitLab CI.</param>
         /// </summary>
-        private static void CreateCall(string template, string name, DirectoryInfo output, string language, string version,
+        private static void CreateCall(string language, string template, string name, DirectoryInfo output, string version,
                                        bool git, bool docker, bool kubernetes, bool gitignore, bool dockerignore,
                                        bool readme, bool contributing, bool license, bool codeofproduct,
                                        bool githubworkflows, bool gitlabci)
