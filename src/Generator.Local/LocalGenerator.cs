@@ -21,7 +21,8 @@ namespace Generator.Local
                 // delete root directory from file name
                 var tempFilePath = file.Info.FullName.Replace($"{template.RootDirectory.FullName}", "");
 
-                var newFileName = $"{pathToProject}{tempFilePath}";
+                var newFileName =  Path.Join(pathToProject, tempFilePath);
+
                 FileInfo fi = new FileInfo(newFileName);
 
                 // if there is no directory
@@ -31,6 +32,25 @@ namespace Generator.Local
                 file.Info.CopyTo(newFileName);
 
                 createdFiles.Add(new Model.File {Info = fi});
+            }
+
+            foreach (var file in template.Plugins)
+            {
+                // make only file name. ...\fileName.txt -> fileName.txt
+                var shortFilePath = Path.GetFileName(file.Info.FullName);
+                shortFilePath = Path.Join("{{ .ProjectName }}", shortFilePath);
+
+                var newFileName = Path.Join(pathToProject, shortFilePath);
+
+                FileInfo fi = new FileInfo(newFileName);
+
+                // if there is no directory
+                fi.Directory.Create();
+
+                // copy file
+                file.Info.CopyTo(newFileName);
+
+                createdFiles.Add(new Model.File { Info = fi });
             }
 
             return new Project

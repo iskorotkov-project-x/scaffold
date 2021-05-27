@@ -1,5 +1,6 @@
 using Loader.FileSystem;
 using System;
+using System.Collections.Generic;
 using Xunit;
 
 namespace Loader.Tests
@@ -13,7 +14,8 @@ namespace Loader.Tests
             var loader = new FileSystemLoader(Environment.GetEnvironmentVariable("SCAFFOLD_TEMPLATES"));
 
             // Act
-            var template = loader.Load("c#", "console");
+            IEnumerable<string> pluginsName = new string[] { "docker", "kubernetes" };
+            var template = loader.Load("c#", "console", pluginsName);
             
             // Assert
             Assert.NotNull(template);

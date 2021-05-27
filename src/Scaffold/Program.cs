@@ -257,6 +257,9 @@ namespace Scaffold
             Console.WriteLine($"Project will be created in {pathToProject}.");
             new DirectoryInfo(pathToProject).Create();
 
+       
+            List<string> plugins = new List<string>();
+
             if (!string.IsNullOrEmpty(version))
             {
                 Console.WriteLine($"The SDK version set to {version}.");
@@ -264,17 +267,20 @@ namespace Scaffold
 
             if (git)
             {
-                Console.WriteLine($"TODO Added git support.");
+                plugins.Add(nameof(git));
+                Console.WriteLine($"Added git support.");
             }
 
             if (docker)
             {
-                Console.WriteLine($"TODO Added Dockerfile support.");
+                plugins.Add(nameof(docker));
+                Console.WriteLine($"Added Dockerfile support.");
             }
 
             if (kubernetes)
             {
-                Console.WriteLine($"TODO Added Kubernetes support.");
+                plugins.Add(nameof(kubernetes));
+                Console.WriteLine($"Added Kubernetes support.");
             }
 
             if (gitignore)
@@ -329,8 +335,9 @@ namespace Scaffold
             var ctx = new Context() { Description = @"TODO description", ProjectName = name, Version = version };
 
             // Load template (with all files)
-            var tl = loader.Load(language, template);
-
+            // We can add one more parameter with List of Plugins.
+            var tl = loader.Load(language, template, plugins);
+           
             // Generate project
             var notProcessedProject = generator.Generate(pathToProject, tl);
 

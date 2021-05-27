@@ -37,21 +37,45 @@ namespace Loader.FileSystem
             return templateInfos;
         }
 
-        public Template Load(string language, string template)
+
+
+        public Template Load(string language, string template, IEnumerable<string> pluginsName)
         {
-            var dirPath = $"{_pathToTemplates}/{language}/{template}";
-            if (!new DirectoryInfo(dirPath).Exists)
+            var filePath = Path.Join(_pathToTemplates, language, template);
+            if (!Directory.Exists(filePath))
             {
-                throw new System.Exception($"{dirPath} is not exists!");
+                throw new System.Exception($"{filePath} is not exists!");
             }
+
+
+            pluginsName = (List<string>)pluginsName;
+            var plugins = new List<Plugin>();
+            var pluginPath = Path.Join(_pathToTemplates, "plugins");
+
+            foreach(var plgName in pluginsName)
+            { 
+                var tempPlugins = Directory.GetFiles(pluginPath, $"{plgName}.*", SearchOption.AllDirectories)
+                    .Select(x => new Model.Plugin() { Info = new FileInfo(x) });
+
+
+                if (tempPlugins.Count<Plugin>() == 0)
+                {
+                    throw new System.Exception($"plugin {plgName} is not exists!");
+                }
+
+                plugins.AddRange(tempPlugins);
+            }
+
 
             return new Template()
             {
                 Language = language,
                 Name = template,
-                Files = Directory.GetFiles(dirPath, "*.*", SearchOption.AllDirectories)
+                Files = Directory.GetFiles(filePath, "*.*", SearchOption.AllDirectories)
                     .Select(x => new Model.File() { Info = new FileInfo(x) }),
-                RootDirectory = new DirectoryInfo(dirPath),
+
+                Plugins = plugins,
+                RootDirectory = new DirectoryInfo(filePath),
             };
         }
     }
