@@ -113,58 +113,43 @@ jobs:
 
     runs-on: ${{ matrix.os }}
 
-    needs: [publish, publish-static-content]
+    needs: [build]
 
     strategy:
       matrix:
+        type: [standalone, dependant]
         include:
-          # Windows x86
-        - os: windows-latest
-          artifact: scaffold-win-x86-dependant.exe
-        - os: windows-latest
-          artifact: scaffold-win-x86-standalone.exe
-          # Windows x64
-        - os: windows-latest
-          artifact: scaffold-win-x64-dependant.exe
-        - os: windows-latest
-          artifact: scaffold-win-x64-standalone.exe
-          # Linux x64
-        - os: ubuntu-latest
-          artifact: scaffold-linux-x64-dependant
-        - os: ubuntu-latest
-          artifact: scaffold-linux-x64-standalone
-          # MacOS x64
-        - os: macos-latest
-          artifact: scaffold-osx-x64-dependant
-        - os: macos-latest
-          artifact: scaffold-osx-x64-standalone
+        - runtime: win-x86
+          os: windows-latest
+        - runtime: win-x64
+          os: windows-latest
+        - runtime: linux-x64
+          os: ubuntu-latest
+        - runtime: osx-x64
+          os: macos-latest
         
     steps:
-    # Prepare environment
-    - name: Setup .NET runtime
-      if: contains(matrix.artifact, 'dependant')
-      uses: actions/setup-dotnet@v1.8.0
+      # Prepare environment.
+    - uses: actions/checkout@v2
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 5.0.x
-        
-    # Prepare templates
-    - name: Download templates
-      uses: actions/download-artifact@v2.0.9
-      with:
-        name: templates
-        path: templates.zip
-    - name: Unzip templates
-      uses: montudor/action-zip@v1
-      with:
-        args: unzip -qq templates.zip -d templates
-    
-    # Prepare binary
-    - name: Download binary
-      uses: actions/download-artifact@v2.0.9
-      with:
-       name: ${{ matrix.artifact }}
-       path: scaffold
-    
-    # Run
-    - name: Run binary
+    - name: Publish
+      run: dotnet publish -c Release -r ${{ matrix.runtime }} -o publish --self-contained ${{ matrix.type == 'standalone' }} -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true -p:PublishTrimmed=${{ matrix.type == 'standalone' }} -p:UseAppHost=true src/Scaffold/Scaffold.csproj
+
+      # Move artifacts.
+    - name: Move Windows artifact
+      if: startsWith(matrix.runtime, 'win')
+      run: mv publish/Scaffold.exe scaffold.exe
+    - name: Move non-Windows artifact
+      if: ${{ !startsWith(matrix.runtime, 'win') }}
+      run: mv publish/Scaffold scaffold
+
+      # Run binary.
+    - name: Run on Windows
+      if: startsWith(matrix.runtime, 'win')
+      run: ./scaffold.exe --version
+    - name: Run on non-Windows
+      if: ${{ !startsWith(matrix.runtime, 'win') }}
       run: SCAFFOLD_TEMPLATES=$(pwd)/templates ./scaffold --version
