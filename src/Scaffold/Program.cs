@@ -149,10 +149,10 @@ namespace Scaffold
             var loader = _serviceProvider.GetRequiredService<ILoader>();
             var templateInfos = loader.GetAllLanguagesAndTemplateNames().ToList();
 
-            Console.WriteLine("n    Name   Languages");
+            Console.WriteLine("n    Name        Languages");
             for (int i = 0; i < templateInfos.Count(); i++)
             {
-                Console.WriteLine($"{i + 1}    {templateInfos[i].Name}    {templateInfos[i].Language}");
+                Console.WriteLine(String.Format("{0,-5}{1,-12}{2,0}", i + 1, templateInfos[i].Name, templateInfos[i].Language));
             }
         }
 
