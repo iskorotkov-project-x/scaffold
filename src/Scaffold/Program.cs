@@ -157,6 +157,24 @@ namespace Scaffold
         }
 
         /// <summary>
+        /// Checks whether the language has a template
+        /// <param name="language"          >The language of the template. Depends on the template.</param>
+        /// <param name="template"          >The template used to create the project when executing the command.</param>
+        /// </summary>
+        private static bool LanguageHasTemplate(string language, string template)
+        {
+            var loader = _serviceProvider.GetRequiredService<ILoader>();
+            var templateInfos = loader.GetAllLanguagesAndTemplateNames().ToList();
+
+            if (templateInfos.Find(x => (x.Language == language && x.Name == template)) == null)
+            {
+                Console.WriteLine($"Sorry, but '{ language }' program language has no '{ template }' template. To see entire list of templates please use 'scaffold -l'");
+                return false;
+            }
+            return true;
+        }
+
+        /// <summary>
         /// Create a project using the specified template. This method will be called when using the create command
         /// <param name="language"          >The language of the template to create. Depends on the template.</param>
         /// <param name="template"          >The template used to create the project when executing the command.</param>
@@ -180,6 +198,12 @@ namespace Scaffold
                                        bool readme, bool contributing, bool license, bool codeofproduct,
                                        bool githubworkflows, bool gitlabci)
         {
+            // Checks that the language has no template
+            if (!LanguageHasTemplate(language, template))
+            {
+                return;
+            }
+
             // Comput output folder
             if (output != null)
             {
