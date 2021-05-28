@@ -48,7 +48,7 @@ namespace Loader.FileSystem
             }
 
 
-            pluginsName = (List<string>)pluginsName;
+            pluginsName = pluginsName.ToList<string>();
             var plugins = new List<Plugin>();
             var pluginPath = Path.Join(_pathToTemplates, "plugins");
 
