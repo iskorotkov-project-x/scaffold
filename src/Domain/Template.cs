@@ -10,8 +10,9 @@ namespace Model
     {
         public DirectoryInfo RootDirectory { get; init; }
 
-        // All files of template
+        // All files and directories of template
         public IEnumerable<File> Files { get; init; }
+        public IEnumerable<Directory> Directories { get; init; }
         public IEnumerable<Plugin> Plugins { get; init; }
     }
 }
