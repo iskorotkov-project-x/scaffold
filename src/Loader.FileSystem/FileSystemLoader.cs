@@ -44,7 +44,7 @@ namespace Loader.FileSystem
         public Template Load(string language, string template, IEnumerable<string> pluginsName)
         {
             var dirPath = Path.Join(_pathToTemplates, language, template);
-            if (!Directory.Exists(dirPath))
+            if (!System.IO.Directory.Exists(dirPath))
             {
                 throw new System.Exception($"{dirPath} is not exists!");
             }
@@ -55,7 +55,7 @@ namespace Loader.FileSystem
 
             foreach(var plgName in pluginsName)
             { 
-                var tempPlugins = Directory.GetFiles(pluginPath, $"{plgName}.*", SearchOption.AllDirectories)
+                var tempPlugins = System.IO.Directory.GetFiles(pluginPath, $"{plgName}.*", SearchOption.AllDirectories)
                     .Select(x => new Model.Plugin() { Info = new FileInfo(x) });
 
 

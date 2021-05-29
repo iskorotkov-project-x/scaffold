@@ -277,7 +277,7 @@ namespace Scaffold
 
             var pathToProject = Path.Join(output.FullName, name); 
             Console.WriteLine($"Project will be created in {pathToProject}.");
-            Directory.CreateDirectory(pathToProject);
+            System.IO.Directory.CreateDirectory(pathToProject);
 
 
 
