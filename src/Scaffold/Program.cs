@@ -166,7 +166,7 @@ namespace Scaffold
             var loader = _serviceProvider.GetRequiredService<ILoader>();
             var templateInfos = loader.GetAllLanguagesAndTemplateNames().ToList();
 
-            return ((templateInfos.Find(x => (x.Language == language && x.Name == template)) != null);
+            return ((templateInfos.Find(x => (x.Language == language && x.Name == template)) != null));
             
         }
 
