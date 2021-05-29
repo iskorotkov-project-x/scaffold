@@ -11,6 +11,7 @@ namespace Generator.Local
         public Project Generate(string pathToProject, Template template)
         {
             var createdFiles = new List<Model.File>();
+            var createdDirectories = new List<Model.Directory>();
             foreach (var file in template.Files)
             {
                 if (file.Info.Name == "template.yml")
@@ -22,7 +23,7 @@ namespace Generator.Local
                 var tempFilePath = file.Info.FullName.Replace($"{template.RootDirectory.FullName}", "");
 
                 var newFileName = $"{pathToProject}{tempFilePath}";
-                FileInfo fi = new FileInfo(newFileName);
+                var fi = new FileInfo(newFileName);
 
                 // if there is no directory
                 fi.Directory.Create();
@@ -33,7 +34,18 @@ namespace Generator.Local
                 createdFiles.Add(new Model.File {Info = fi});
             }
 
-            return new Project
+            foreach (var directory in template.Directories)
+            {
+                var tempDirectoryPath = directory.Info.FullName.Replace($"{template.RootDirectory.FullName}", "");
+
+                var newDirectoryName = $"{pathToProject}{tempDirectoryPath}";
+                var di = new DirectoryInfo(newDirectoryName);
+
+                // if there is no directory
+                di.Create();
+            }
+
+                return new Project
             {
                 CreatedFiles = createdFiles
             };
