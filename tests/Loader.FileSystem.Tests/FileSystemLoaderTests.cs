@@ -11,10 +11,10 @@ namespace Loader.Tests
         public void LoadTemplate()
         {
             // Arrange
-            var loader = new FileSystemLoader(Environment.GetEnvironmentVariable("SCAFFOLD_TEMPLATES"));
+            var loader = new FileSystemLoader(Environment.GetEnvironmentVariable("SCAFFOLD_TEMPLATES"), Environment.GetEnvironmentVariable("SCAFFOLD_PlUGINS"));    
 
             // Act
-            IEnumerable<string> pluginsName = new string[] { "docker", "kubernetes" };
+            var pluginsName = new string[] { "docker", "kubernetes" };
             var template = loader.Load("c#", "console", pluginsName);
             
             // Assert

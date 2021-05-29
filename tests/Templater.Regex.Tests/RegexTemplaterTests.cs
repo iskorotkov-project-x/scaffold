@@ -15,8 +15,9 @@ namespace Templater.Tests
         public void SubstituteTemplates()
         {
             // Arrange
-            var loader = new FileSystemLoader(Environment.GetEnvironmentVariable("SCAFFOLD_TEMPLATES"));
-            IEnumerable<string> pluginsName = new string[] {"docker", "kubernetes"};
+            var loader = new FileSystemLoader(Environment.GetEnvironmentVariable("SCAFFOLD_TEMPLATES"), Environment.GetEnvironmentVariable("SCAFFOLD_PlUGINS"));
+            
+            var pluginsName = new string[] {"docker", "kubernetes"};
             var tl = loader.Load("c#", "console", pluginsName);
             var generator = new LocalGenerator();
 

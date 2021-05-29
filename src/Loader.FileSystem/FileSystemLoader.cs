@@ -11,10 +11,12 @@ namespace Loader.FileSystem
     public class FileSystemLoader : ILoader
     {
         private readonly string _pathToTemplates;
+        private readonly string _pathToPlugins;
 
-        public FileSystemLoader(string pathToTemplates)
+        public FileSystemLoader(string pathToTemplates, string pathToPlugins)
         {
             _pathToTemplates = pathToTemplates;
+            _pathToPlugins = pathToPlugins;
         }
 
         public IEnumerable<TemplateInfo> GetAllLanguagesAndTemplateNames()
@@ -41,16 +43,15 @@ namespace Loader.FileSystem
 
         public Template Load(string language, string template, IEnumerable<string> pluginsName)
         {
-            var filePath = Path.Join(_pathToTemplates, language, template);
-            if (!Directory.Exists(filePath))
+            var dirPath = Path.Join(_pathToTemplates, language, template);
+            if (!Directory.Exists(dirPath))
             {
-                throw new System.Exception($"{filePath} is not exists!");
+                throw new System.Exception($"{dirPath} is not exists!");
             }
 
-
-            pluginsName = pluginsName.ToList<string>();
+            pluginsName = pluginsName.ToList();
             var plugins = new List<Plugin>();
-            var pluginPath = Path.Join(_pathToTemplates, "plugins");
+            var pluginPath = _pathToPlugins;
 
             foreach(var plgName in pluginsName)
             { 
@@ -58,7 +59,7 @@ namespace Loader.FileSystem
                     .Select(x => new Model.Plugin() { Info = new FileInfo(x) });
 
 
-                if (tempPlugins.Count<Plugin>() == 0)
+                if (tempPlugins.Count() == 0)
                 {
                     throw new System.Exception($"plugin {plgName} is not exists!");
                 }
@@ -71,11 +72,11 @@ namespace Loader.FileSystem
             {
                 Language = language,
                 Name = template,
-                Files = Directory.GetFiles(filePath, "*.*", SearchOption.AllDirectories)
+                Files = Directory.GetFiles(dirPath, "*.*", SearchOption.AllDirectories)
                     .Select(x => new Model.File() { Info = new FileInfo(x) }),
 
                 Plugins = plugins,
-                RootDirectory = new DirectoryInfo(filePath),
+                RootDirectory = new DirectoryInfo(dirPath),
             };
         }
     }

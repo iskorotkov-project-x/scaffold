@@ -23,7 +23,7 @@ namespace Generator.Local
 
                 var newFileName =  Path.Join(pathToProject, tempFilePath);
 
-                FileInfo fi = new FileInfo(newFileName);
+                var fi = new FileInfo(newFileName);
 
                 // if there is no directory
                 fi.Directory.Create();
@@ -38,11 +38,11 @@ namespace Generator.Local
             {
                 // make only file name. ...\fileName.txt -> fileName.txt
                 var shortFilePath = Path.GetFileName(file.Info.FullName);
-                shortFilePath = Path.Join("{{ .ProjectName }}", shortFilePath);
+                shortFilePath = Path.Join($"{{{{ .{nameof(Context.ProjectName)} }}}}", shortFilePath);
 
                 var newFileName = Path.Join(pathToProject, shortFilePath);
 
-                FileInfo fi = new FileInfo(newFileName);
+                var fi = new FileInfo(newFileName);
 
                 // if there is no directory
                 fi.Directory.Create();
