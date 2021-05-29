@@ -166,12 +166,8 @@ namespace Scaffold
             var loader = _serviceProvider.GetRequiredService<ILoader>();
             var templateInfos = loader.GetAllLanguagesAndTemplateNames().ToList();
 
-            if (templateInfos.Find(x => (x.Language == language && x.Name == template)) == null)
-            {
-                Console.WriteLine($"Sorry, but '{ language }' program language has no '{ template }' template. To see entire list of templates please use 'scaffold -l'");
-                return false;
-            }
-            return true;
+            return ((templateInfos.Find(x => (x.Language == language && x.Name == template)) != null);
+            
         }
 
         /// <summary>
@@ -201,6 +197,7 @@ namespace Scaffold
             // Checks that the language has no template
             if (!LanguageHasTemplate(language, template))
             {
+                Console.WriteLine($"Sorry, but '{ language }' program language has no '{ template }' template. To see entire list of templates please use 'scaffold -l'");
                 return;
             }
 
