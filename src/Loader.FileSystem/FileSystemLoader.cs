@@ -72,10 +72,11 @@ namespace Loader.FileSystem
             {
                 Language = language,
                 Name = template,
-                Files = Directory.GetFiles(dirPath, "*.*", SearchOption.AllDirectories)
+                Files = System.IO.Directory.GetFiles(dirPath, "*.*", SearchOption.AllDirectories)
                     .Select(x => new Model.File() { Info = new FileInfo(x) }),
 
                 Plugins = plugins,
+
                 RootDirectory = new DirectoryInfo(dirPath),
             };
         }

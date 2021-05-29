@@ -29,11 +29,38 @@ jobs:
     - name: Test
       run: SCAFFOLD_TEMPLATES=$(pwd)/templates dotnet test -c ${{ matrix.configuration }} --no-build --verbosity normal
 
+  publish-static-content:
+
+    runs-on: ubuntu-latest
+
+    needs: [build, test-run]
+    
+    steps:
+    - uses: actions/checkout@v2
+    - name: Upload templates
+      uses: actions/upload-artifact@v2.2.3
+      with:
+        name: templates
+        path: templates/
+
+      # Create release.
+    - name: Zip templates
+      uses: montudor/action-zip@v1
+      with:
+        args: zip -qq -r templates.zip templates
+    - name: Upload templates for release
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: templates.zip
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+
   publish:
 
     runs-on: ubuntu-latest
 
-    needs: [build]
+    needs: [build, test-run]
 
     strategy:
       matrix:
@@ -70,26 +97,60 @@ jobs:
       with:
         name: scaffold-${{ matrix.runtime }}-${{ matrix.type }}
         path: scaffold-${{ matrix.runtime }}-${{ matrix.type }}
-    - name: Upload templates
-      uses: actions/upload-artifact@v2.2.3
-      with:
-        name: templates
-        path: templates/
 
       # Publish release.
-    - name: Download zipped templates
-      uses: actions/download-artifact@v2.0.9
-      if: startsWith(github.ref, 'refs/tags/')
-      with:
-        name: templates
-        path: templates.zip
-    - name: Upload an artifact for release
+    - name: Upload artifacts for release
       uses: softprops/action-gh-release@v1
       if: startsWith(github.ref, 'refs/tags/')
       with:
         files: |
           scaffold-${{ matrix.runtime }}-${{ matrix.type }}
           scaffold-${{ matrix.runtime }}-${{ matrix.type }}.exe
-          templates.zip
       env:
         GITHUB_TOKEN: ${{ github.token }}
+
+  test-run:
+
+    runs-on: ${{ matrix.os }}
+
+    needs: [build]
+
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+        type: [standalone, dependant]
+        include:
+        - os: windows-latest
+          runtime: win-x86
+        - os: windows-latest
+          runtime: win-x64
+        - os: ubuntu-latest
+          runtime: linux-x64
+        - os: macos-latest
+          runtime: osx-x64
+        
+    steps:
+      # Prepare environment.
+    - uses: actions/checkout@v2
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 5.0.x
+    - name: Publish
+      run: dotnet publish -c Release -r ${{ matrix.runtime }} -o publish --self-contained ${{ matrix.type == 'standalone' }} -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true -p:PublishTrimmed=${{ matrix.type == 'standalone' }} -p:UseAppHost=true src/Scaffold/Scaffold.csproj
+
+      # Move artifacts.
+    - name: Move Windows artifact
+      if: startsWith(matrix.runtime, 'win')
+      run: mv publish/Scaffold.exe scaffold.exe
+    - name: Move non-Windows artifact
+      if: ${{ !startsWith(matrix.runtime, 'win') }}
+      run: mv publish/Scaffold scaffold
+
+      # Run binary.
+    - name: Run on Windows
+      if: startsWith(matrix.runtime, 'win')
+      run: ./scaffold.exe --version
+    - name: Run on non-Windows
+      if: ${{ !startsWith(matrix.runtime, 'win') }}
+      run: SCAFFOLD_TEMPLATES=$(pwd)/templates ./scaffold --version
