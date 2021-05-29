@@ -23,7 +23,7 @@ namespace Generator.Local
                 var tempFilePath = file.Info.FullName.Replace($"{template.RootDirectory.FullName}", "");
 
                 var newFileName = $"{pathToProject}{tempFilePath}";
-                FileInfo fi = new FileInfo(newFileName);
+                var fi = new FileInfo(newFileName);
 
                 // if there is no directory
                 fi.Directory.Create();
@@ -39,7 +39,7 @@ namespace Generator.Local
                 var tempDirectoryPath = directory.Info.FullName.Replace($"{template.RootDirectory.FullName}", "");
 
                 var newDirectoryName = $"{pathToProject}{tempDirectoryPath}";
-                DirectoryInfo di = new DirectoryInfo(newDirectoryName);
+                var di = new DirectoryInfo(newDirectoryName);
 
                 // if there is no directory
                 di.Create();
