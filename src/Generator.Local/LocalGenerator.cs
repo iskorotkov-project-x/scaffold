@@ -11,6 +11,7 @@ namespace Generator.Local
         public Project Generate(string pathToProject, Template template)
         {
             var createdFiles = new List<Model.File>();
+            var createdDirectories = new List<Model.Directory>();
             foreach (var file in template.Files)
             {
                 if (file.Info.Name == "template.yml")
@@ -20,6 +21,7 @@ namespace Generator.Local
 
                 // delete root directory from file name
                 var tempFilePath = file.Info.FullName.Replace($"{template.RootDirectory.FullName}", "");
+
 
                 var newFileName =  Path.Join(pathToProject, tempFilePath);
 
@@ -54,6 +56,7 @@ namespace Generator.Local
             }
 
             return new Project
+
             {
                 CreatedFiles = createdFiles
             };
