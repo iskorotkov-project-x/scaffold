@@ -21,13 +21,10 @@ namespace Scaffold
         private static ServiceProvider _serviceProvider;
 
         private static async Task<int> Main(string[] args)
-        {
-            var pathToTemplates = "";
-            var pathToPlugins = "";
+        { 
+            var pathToTemplates = Environment.GetEnvironmentVariable("SCAFFOLD_TEMPLATES");
+            var pathToPlugins = Environment.GetEnvironmentVariable("SCAFFOLD_PLUGINS");
 
-            pathToTemplates = Environment.GetEnvironmentVariable("SCAFFOLD_TEMPLATES");
-            pathToPlugins = Environment.GetEnvironmentVariable("SCAFFOLD_PLUGINS");
-    
             if (string.IsNullOrEmpty(pathToTemplates))
             {
                 pathToTemplates = Path.Join(Environment.CurrentDirectory, "templates");
