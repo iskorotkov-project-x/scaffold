@@ -22,7 +22,6 @@ namespace Generator.Local
                 // delete root directory from file name
                 var tempFilePath = file.Info.FullName.Replace($"{template.RootDirectory.FullName}", "");
 
-
                 var newFileName =  Path.Join(pathToProject, tempFilePath);
 
                 var fi = new FileInfo(newFileName);

@@ -32,7 +32,7 @@ namespace Scaffold
 
             if (string.IsNullOrEmpty(pathToPlugins))
             {
-                pathToTemplates = Path.Join(Environment.CurrentDirectory, "plugins");
+                pathToPlugins = Path.Join(Environment.CurrentDirectory, "plugins");
             }
 
             if (!new DirectoryInfo(pathToTemplates).Exists)
