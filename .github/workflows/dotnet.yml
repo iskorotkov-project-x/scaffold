@@ -27,7 +27,7 @@ jobs:
     - name: Build
       run: dotnet build -c ${{ matrix.configuration }} --no-restore
     - name: Test
-      run: SCAFFOLD_TEMPLATES=$(pwd)/templates dotnet test -c ${{ matrix.configuration }} --no-build --verbosity normal
+      run: SCAFFOLD_TEMPLATES=$(pwd)/templates SCAFFOLD_PLUGINS=$(pwd)/plugins dotnet test -c ${{ matrix.configuration }} --no-build --verbosity normal
 
   publish-static-content:
 
@@ -153,4 +153,4 @@ jobs:
       run: ./scaffold.exe --version
     - name: Run on non-Windows
       if: ${{ !startsWith(matrix.runtime, 'win') }}
-      run: SCAFFOLD_TEMPLATES=$(pwd)/templates ./scaffold --version
+      run: SCAFFOLD_TEMPLATES=$(pwd)/templates SCAFFOLD_PLUGINS=$(pwd)/plugins ./scaffold --version
