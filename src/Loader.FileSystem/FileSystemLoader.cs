@@ -11,10 +11,12 @@ namespace Loader.FileSystem
     public class FileSystemLoader : ILoader
     {
         private readonly string _pathToTemplates;
+        private readonly string _pathToPlugins;
 
-        public FileSystemLoader(string pathToTemplates)
+        public FileSystemLoader(string pathToTemplates, string pathToPlugins)
         {
             _pathToTemplates = pathToTemplates;
+            _pathToPlugins = pathToPlugins;
         }
 
         public IEnumerable<TemplateInfo> GetAllLanguagesAndTemplateNames()
@@ -37,13 +39,34 @@ namespace Loader.FileSystem
             return templateInfos;
         }
 
-        public Template Load(string language, string template)
+
+
+        public Template Load(string language, string template, IEnumerable<string> pluginsName)
         {
-            var dirPath = $"{_pathToTemplates}/{language}/{template}";
-            if (!new DirectoryInfo(dirPath).Exists)
+            var dirPath = Path.Join(_pathToTemplates, language, template);
+            if (!System.IO.Directory.Exists(dirPath))
             {
                 throw new System.Exception($"{dirPath} is not exists!");
             }
+
+            pluginsName = pluginsName.ToList();
+            var plugins = new List<Plugin>();
+            var pluginPath = _pathToPlugins;
+
+            foreach(var plgName in pluginsName)
+            { 
+                var tempPlugins = System.IO.Directory.GetFiles(pluginPath, $"{plgName}.*", SearchOption.AllDirectories)
+                    .Select(x => new Model.Plugin() { Info = new FileInfo(x) });
+
+
+                if (tempPlugins.Count() == 0)
+                {
+                    throw new System.Exception($"plugin {plgName} is not exists!");
+                }
+
+                plugins.AddRange(tempPlugins);
+            }
+
 
             return new Template()
             {
@@ -51,8 +74,9 @@ namespace Loader.FileSystem
                 Name = template,
                 Files = System.IO.Directory.GetFiles(dirPath, "*.*", SearchOption.AllDirectories)
                     .Select(x => new Model.File() { Info = new FileInfo(x) }),
-                Directories = System.IO.Directory.GetDirectories(dirPath, "*.*", SearchOption.AllDirectories)
-                    .Select(x => new Model.Directory() { Info = new DirectoryInfo(x) }),
+
+                Plugins = plugins,
+
                 RootDirectory = new DirectoryInfo(dirPath),
             };
         }

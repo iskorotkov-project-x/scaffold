@@ -21,17 +21,18 @@ namespace Scaffold
         private static ServiceProvider _serviceProvider;
 
         private static async Task<int> Main(string[] args)
-        {
-            string pathToTemplates = "";
-            try
-            {
-                pathToTemplates = Environment.GetEnvironmentVariable("SCAFFOLD_TEMPLATES");
-            }
-            catch (Exception) { }
+        { 
+            var pathToTemplates = Environment.GetEnvironmentVariable("SCAFFOLD_TEMPLATES");
+            var pathToPlugins = Environment.GetEnvironmentVariable("SCAFFOLD_PLUGINS");
 
             if (string.IsNullOrEmpty(pathToTemplates))
             {
-                pathToTemplates = $"{Environment.CurrentDirectory}\\templates";
+                pathToTemplates = Path.Join(Environment.CurrentDirectory, "templates");
+            }
+
+            if (string.IsNullOrEmpty(pathToPlugins))
+            {
+                pathToPlugins = Path.Join(Environment.CurrentDirectory, "plugins");
             }
 
             if (!new DirectoryInfo(pathToTemplates).Exists)
@@ -42,8 +43,16 @@ namespace Scaffold
                 return 0;
             }
 
+            if (!new DirectoryInfo(pathToPlugins).Exists)
+            {
+                Console.WriteLine($"Directory '{pathToPlugins}' not found!");
+                Console.WriteLine($"Press any key to continue...");
+                Console.ReadKey();
+                return 0;
+            }
+
             // Add services. Services is used to take needed class with certain interface
-            _services.AddSingleton<ILoader, FileSystemLoader>(x => new FileSystemLoader(pathToTemplates));
+            _services.AddSingleton<ILoader, FileSystemLoader>(x => new FileSystemLoader(pathToTemplates, pathToPlugins));
             _services.AddSingleton<IGenerator, LocalGenerator>();
             _services.AddSingleton<ITemplater, RegexTemplater>();
 
@@ -266,17 +275,26 @@ namespace Scaffold
             }
 
             // Check if there such directory compiled by output directory and project name
-            if (new DirectoryInfo($"{output.FullName}\\{name}").Exists)
+            var resultPath = Path.Join(output.FullName, name);
+            if (new DirectoryInfo(resultPath).Exists)
             {
                 int i = 0;
                 // Folder must be unique
-                while (new DirectoryInfo($"{output.FullName}\\{name}{++i}").Exists) ;
+                do
+                {
+                    resultPath = Path.Join(output.FullName, $"{name}{++i}");
+                } while (new DirectoryInfo(resultPath).Exists);
+                 
                 name = $"{name}{i}";
             }
 
-            var pathToProject = $"{output.FullName}\\{name}";
+            var pathToProject = Path.Join(output.FullName, name); 
             Console.WriteLine($"Project will be created in {pathToProject}.");
-            new DirectoryInfo(pathToProject).Create();
+            System.IO.Directory.CreateDirectory(pathToProject);
+
+
+
+            var plugins = new List<string>();
 
             if (!string.IsNullOrEmpty(version))
             {
@@ -285,17 +303,20 @@ namespace Scaffold
 
             if (git)
             {
-                Console.WriteLine($"TODO Added git support.");
+                plugins.Add(nameof(git));
+                Console.WriteLine($"Added git support.");
             }
 
             if (docker)
             {
-                Console.WriteLine($"TODO Added Dockerfile support.");
+                plugins.Add(nameof(docker));
+                Console.WriteLine($"Added Dockerfile support.");
             }
 
             if (kubernetes)
             {
-                Console.WriteLine($"TODO Added Kubernetes support.");
+                plugins.Add(nameof(kubernetes));
+                Console.WriteLine($"Added Kubernetes support.");
             }
 
             if (gitignore)
@@ -350,8 +371,8 @@ namespace Scaffold
             var ctx = new Context() { Description = @"TODO description", ProjectName = name, Version = version };
 
             // Load template (with all files)
-            var tl = loader.Load(language, template);
-
+            var tl = loader.Load(language, template, plugins);
+           
             // Generate project
             var notProcessedProject = generator.Generate(pathToProject, tl);
 

@@ -2,6 +2,7 @@ using Generator.Local;
 using Loader.FileSystem;
 using Model;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Templater.Regex;
 using Xunit;
@@ -14,8 +15,10 @@ namespace Templater.Tests
         public void SubstituteTemplates()
         {
             // Arrange
-            var loader = new FileSystemLoader(Environment.GetEnvironmentVariable("SCAFFOLD_TEMPLATES"));
-            var tl = loader.Load("c#", "console");
+            var loader = new FileSystemLoader(Environment.GetEnvironmentVariable("SCAFFOLD_TEMPLATES"), Environment.GetEnvironmentVariable("SCAFFOLD_PLUGINS"));
+            
+            var pluginsName = new string[] {"docker", "kubernetes"};
+            var tl = loader.Load("c#", "console", pluginsName);
             var generator = new LocalGenerator();
 
             var di = new DirectoryInfo($"{Environment.CurrentDirectory}/testProject");
