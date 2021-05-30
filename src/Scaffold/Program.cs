@@ -22,8 +22,8 @@ namespace Scaffold
 
         private static async Task<int> Main(string[] args)
         {
-            string pathToTemplates = "";
-            string pathToPlugins = "";
+            var pathToTemplates = "";
+            var pathToPlugins = "";
 
             pathToTemplates = Environment.GetEnvironmentVariable("SCAFFOLD_TEMPLATES");
             pathToPlugins = Environment.GetEnvironmentVariable("SCAFFOLD_PLUGINS");
@@ -53,8 +53,6 @@ namespace Scaffold
                 Console.ReadKey();
                 return 0;
             }
-
-
 
             // Add services. Services is used to take needed class with certain interface
             _services.AddSingleton<ILoader, FileSystemLoader>(x => new FileSystemLoader(pathToTemplates, pathToPlugins));
