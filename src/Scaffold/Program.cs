@@ -24,13 +24,10 @@ namespace Scaffold
         {
             string pathToTemplates = "";
             string pathToPlugins = "";
-            try
-            {
-                pathToTemplates = Environment.GetEnvironmentVariable("SCAFFOLD_TEMPLATES");
-                pathToPlugins = Environment.GetEnvironmentVariable("SCAFFOLD_PLUGINS");
-            }
-            catch (Exception) { }
 
+            pathToTemplates = Environment.GetEnvironmentVariable("SCAFFOLD_TEMPLATES");
+            pathToPlugins = Environment.GetEnvironmentVariable("SCAFFOLD_PLUGINS");
+    
             if (string.IsNullOrEmpty(pathToTemplates))
             {
                 pathToTemplates = Path.Join(Environment.CurrentDirectory, "templates");
