@@ -22,9 +22,7 @@ namespace Loader.Tests
             Assert.Equal("c#", template.Language);
             Assert.Equal("console", template.Name);
             Assert.NotEmpty(template.Files);
-
-            // in current state we not use plugins
-            //Assert.NotEmpty(template.Plugins);
+            Assert.NotEmpty(template.Plugins);
         }
     }
 }
