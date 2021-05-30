@@ -37,15 +37,18 @@ jobs:
     
     steps:
     - uses: actions/checkout@v2
-    - name: Upload templates and plugins
+    - name: Upload templates
       uses: actions/upload-artifact@v2.2.3
       with:
         name: templates
-        path: |
-          templates/
-          plugins/
+        path: templates
+    - name: Upload plugins
+      uses: actions/upload-artifact@v2.2.3
+      with:
+        name: plugins
+        path: plugins
 
-      # Create release.
+      # Zip static content.
     - name: Zip templates
       uses: montudor/action-zip@v1
       if: startsWith(github.ref, 'refs/tags/')
@@ -56,13 +59,20 @@ jobs:
       if: startsWith(github.ref, 'refs/tags/')
       with:
         args: zip -qq -r plugins.zip plugins
+
+      # Create release.
+    - name: Upload templates for release
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: templates.zip
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
     - name: Upload plugins for release
       uses: softprops/action-gh-release@v1
       if: startsWith(github.ref, 'refs/tags/')
       with:
-        files: |
-          templates.zip
-          plugins.zip
+        files: plugins.zip
       env:
         GITHUB_TOKEN: ${{ github.token }}
 
