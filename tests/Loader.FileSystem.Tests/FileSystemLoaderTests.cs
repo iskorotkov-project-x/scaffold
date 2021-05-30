@@ -11,7 +11,7 @@ namespace Loader.Tests
         public void LoadTemplate()
         {
             // Arrange
-            var loader = new FileSystemLoader(Environment.GetEnvironmentVariable("SCAFFOLD_TEMPLATES"), Environment.GetEnvironmentVariable("SCAFFOLD_PlUGINS"));    
+            var loader = new FileSystemLoader(Environment.GetEnvironmentVariable("SCAFFOLD_TEMPLATES"), Environment.GetEnvironmentVariable("SCAFFOLD_PLUGINS"));    
 
             // Act
             var pluginsName = new string[] { "docker", "kubernetes" };
